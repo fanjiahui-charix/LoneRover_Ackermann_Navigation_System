@@ -1,8 +1,6 @@
-# LoneRover
+# LoneRover Ackermann Navigation System · ROS 2 竞赛导航系统
 
-**LoneRover Ackermann Navigation System** · ROS 2 竞赛导航系统
-
-一套在真实比赛场地完成验证的 Ackermann 小车导航系统：轮式里程计与 IMU 的 EKF 融合惯导、1 cm 静态地图、N10 雷达锥桶感知、阶段化 BEV stack、Nav2、完整任务状态机、倒车 LUT、通道 Tube/RPP，以及底盘速度控制和安全输出。
+一套在真实比赛场地完成验证的 Ackermann 小车导航系统：轮式里程计与 IMU 的 EKF 融合惯导、1 cm 静态地图、N10 雷达锥桶感知、Nav2、完整任务状态机、倒车 LUT、通道 Tube/RPP，以及底盘速度控制和安全输出。在2026地瓜机器人智慧医疗智能车创意组中稳定可以跑40s，再调一下速度和任务流程，能进30s。
 
 
 [English README](README_EN.md)
