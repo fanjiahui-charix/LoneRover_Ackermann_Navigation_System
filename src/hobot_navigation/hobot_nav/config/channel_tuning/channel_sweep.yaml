@@ -1,0 +1,25 @@
+schema_version: 1
+lookahead:
+  lookahead_time: [0.45, 0.55, 0.65]
+  min_lookahead_dist: [0.18, 0.20, 0.22]
+  max_lookahead_dist: [0.28, 0.32, 0.36]
+  lookahead_dist: [0.22, 0.25, 0.28]
+corner_preview:
+  distance_m: [0.30, 0.40, 0.50]
+speed:
+  straight_mps: [0.50, 0.60, 0.70, 0.80]
+  straight_opt_in_mps: [0.90]
+  corner_mps: [0.40, 0.45, 0.50, 0.55]
+connector:
+  length_m: [0.45, 0.55, 0.65, 0.75]
+  anchor_spacing_m: [0.02, 0.05]
+  source_curvature_threshold_1pm: 0.25
+  lane_change_speed_mps: [0.35, 0.40, 0.45, 0.50]
+avoidance:
+  switch_trigger_distance_m: [0.9, 1.1, 1.3, 1.5]
+  return_margin_m: [0.3, 0.4, 0.5]
+policy:
+  cartesian_product_allowed: false
+  stage_order: [lookahead, corner_speed, straight_speed, fine]
+  collision_detection_must_remain_enabled: true
+  ttc_sec_must_remain: 0.80

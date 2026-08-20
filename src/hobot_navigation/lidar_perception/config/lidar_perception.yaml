@@ -1,0 +1,137 @@
+scan_filter_node:
+  ros__parameters:
+    input_topic: /scan_raw
+    output_topic: /scan
+    target_frame: laser_link
+
+    min_range: 0.15
+    max_range: 6.0
+    range_scale: 1.0
+    range_bias: 0.0
+    angle_offset_deg: 0.0
+    reverse_scan: false
+
+    enable_median_filter: true
+    median_window: 3
+    fill_invalid_with_median: false
+
+    enable_jump_filter: false
+    jump_threshold_base: 0.1005959233
+    jump_threshold_scale: 0.0083357561
+    min_preserve_cluster_points: 2
+
+    enable_speckle_filter: true
+    # Preserve a two-return cone, including one missing beam between returns.
+    # A true singleton is still rejected; long wall/fence surfaces are
+    # unchanged and remain distinguishable downstream by width/PCA.
+    speckle_neighbor_count: 1
+    speckle_search_radius: 2
+    speckle_range_threshold: 0.1562996048
+    min_intensity: 0.0
+
+    enable_self_mask: false
+    self_mask_angle_min_deg: -20.0
+    self_mask_angle_max_deg: 20.0
+    self_mask_range_max: 0.12
+
+    # Shared vehicle footprint contract: 0.28/0.11/0.13, padding=0.
+    enable_self_polygon_mask: true
+    self_mask_frame: base_link
+    self_mask_transform_timeout: 0.05
+    self_mask_polygon: [0.28, 0.13, 0.28, -0.13, -0.11, -0.13, -0.11, 0.13]
+
+    use_inf_for_far: true
+    use_nan_for_invalid: true
+    enable_diagnostics: true
+    diagnostics_every_n: 50
+
+cone_detector_node:
+  ros__parameters:
+    scan_topic: /scan
+    cone_points_topic: /cones/points
+    cone_poses_topic: /cones/poses
+    marker_topic: /cones/markers
+
+    output_frame: laser_link
+
+    min_range: 0.15
+    # The rear field cones measured at 3.15, 4.18 and 4.33 m. Keep the scan
+    # filter's 6 m visibility, but bound semantic cone admission to 4.5 m.
+    max_range: 4.5
+
+    cluster_base_threshold: 0.0410952746
+    cluster_range_scale: 0.0058098751
+
+    min_cluster_points: 2
+    max_cluster_points: 31
+    min_cluster_width: 0.0215923891
+    max_cluster_width: 0.1819221261
+    min_radial_thickness: 0.0
+    max_radial_thickness: 0.1422778454
+    max_cluster_index_gap: 2
+
+    # A sparse scan has only a few returns for a distant cone. Beyond about
+    # can legitimately return only two adjacent beams (roughly 18 mm span at
+    # 1.3 m). Admit that sparse geometry only with a lower width floor and a
+    # stronger temporal confirmation; normal 3+ point clusters retain the
+    # calibrated width/PCA gates below.
+    sparse_cluster_max_points: 2
+    sparse_min_cluster_width: 0.010
+    sparse_min_track_hits: 3
+    # A two-return object must be isolated from other nearby scan surfaces.
+    # This rejects broken wall/fence endpoints without suppressing the isolated
+    # two/three-return cones visible in the open course interior.
+    sparse_isolation_index_gap: 5
+    sparse_isolation_distance: 0.12
+    sparse_line_guard_min_points: 4
+    sparse_line_guard_min_length: 0.12
+    sparse_line_guard_distance: 0.08
+    sparse_line_guard_extension: 0.25
+    sparse_line_support_radius: 0.80
+    sparse_line_support_distance: 0.035
+    sparse_line_support_min_offset: 0.10
+    sparse_line_support_min_points: 4
+
+    # Clip only against the outer map boundary. Do not use
+    # internal occupied cells as a detector gate: small localization offsets
+    # near a wall must not erase a real cone. ConeLayer independently refuses
+    # to write costs where the master map is already lethal/unknown.
+    enable_map_free_space_filter: true
+    map_topic: /map
+    map_occupied_threshold: 65
+    map_filter_tf_timeout: 0.03
+    map_filter_fail_open: true
+    map_reject_unknown: false
+    map_reject_occupied: false
+    map_bounds_margin: 0.05
+
+    enable_pca_filter: true
+    max_pca_ratio: 14.6091516968
+
+    # Radius of the cone cross-section at the lidar scan height.  This is
+    # only used to compensate the visible near-side arc back to its center.
+    # The physical base/occupancy radius is configured independently as
+    # ConeLayer effective_radius=0.13 in the navigation costmaps.
+    scan_surface_radius: 0.045
+    range_center_compensation: true
+    marker_diameter: 0.09
+
+    enable_temporal_filter: true
+    association_distance: 0.16
+    track_timeout: 0.30
+    min_track_hits: 2
+    publish_debug_markers: false
+    publish_rejected_markers: false
+    max_debug_markers: 80
+    publish_empty_when_no_tracks: true
+
+scan_deskew_node:
+  ros__parameters:
+    scan_topic: /scan_raw
+    odom_topic: /odom
+    output_topic: /scan_deskewed
+    output_frame: laser_link
+    scan_period: 0.10
+    reference_time_ratio: 0.5
+    enable_deskew: false
+    max_odom_age: 0.2

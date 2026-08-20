@@ -1,0 +1,23 @@
+schema_version: 2
+cone_layer:
+  plugin: lidar_perception::ConeLayer
+  center_topic: /cones/points
+  lethal_disk_radius_m: 0.13
+  soft_cost_radius_m: 0.23
+  soft_cost_is_hard_collision: false
+collision_semantics:
+  cone_radius_represents: lethal_disk_around_detected_cone_center
+  vehicle_footprint_applied_by: Nav2_RPP_collision_check
+  add_vehicle_half_width_to_lethal_disk: false
+  add_static_inflation_to_lethal_disk: false
+  offline_side_feasibility_test: distance_from_cone_center_to_swept_vehicle_footprint_ge_0p13
+side_classifier:
+  code_0: OUTSIDE_OR_INVALID
+  code_1: CONE_INNER_SIDE
+  code_2: CONE_OUTER_SIDE
+  runtime_policy:
+    CONE_INNER_SIDE: select_OUTER_tube
+    CONE_OUTER_SIDE: select_INNER_tube
+contracts:
+  perception_parameters_changed_by_channel_tuning: false
+  classifier_is_not_feasibility_gate: true

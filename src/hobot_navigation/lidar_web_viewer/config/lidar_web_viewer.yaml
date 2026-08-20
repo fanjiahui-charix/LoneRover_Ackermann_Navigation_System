@@ -1,0 +1,12 @@
+/lidar_web_viewer:
+  ros__parameters:
+    scan_topic: /scan
+    host: 0.0.0.0
+    port: 8765
+    scan_timeout: 1.0
+    cluster_distance_threshold: 0.18
+    cluster_min_points: 4
+    cluster_max_range: 8.0
+    view_front_range: 5.0
+    view_rear_range: 1.0
+    view_side_range: 3.0

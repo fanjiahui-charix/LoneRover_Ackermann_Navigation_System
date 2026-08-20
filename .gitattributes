@@ -1,0 +1,13 @@
+*.bin binary
+*.hbm binary
+*.onnx binary
+*.so binary
+*.a binary
+*.pgm binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.h264 binary
+*.h265 binary
+*.nv12 binary
+*.yuv binary

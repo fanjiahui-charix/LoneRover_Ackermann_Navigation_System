@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Navigation transport for the 1 cm OccupancyGrid/costmaps.
+  Keep this profile UDPv4-only: it avoids the X5 large-sample SHM path while
+  retaining reliable RTPS fragmentation for the approximately 250 KiB map.
+  This profile is for standard ROS 2 navigation topics only.
+-->
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <transport_descriptors>
+    <transport_descriptor>
+      <transport_id>hobot_nav_udp</transport_id>
+      <type>UDPv4</type>
+      <maxMessageSize>65500</maxMessageSize>
+      <sendBufferSize>4194304</sendBufferSize>
+      <receiveBufferSize>4194304</receiveBufferSize>
+      <non_blocking_send>false</non_blocking_send>
+    </transport_descriptor>
+  </transport_descriptors>
+
+  <participant profile_name="hobot_nav_udp_participant" is_default_profile="true">
+    <rtps>
+      <userTransports>
+        <transport_id>hobot_nav_udp</transport_id>
+      </userTransports>
+      <useBuiltinTransports>false</useBuiltinTransports>
+      <sendSocketBufferSize>4194304</sendSocketBufferSize>
+      <listenSocketBufferSize>4194304</listenSocketBufferSize>
+    </rtps>
+  </participant>
+
+  <data_writer profile_name="default publisher profile" is_default_profile="true">
+    <qos>
+      <publishMode>
+        <kind>ASYNCHRONOUS</kind>
+      </publishMode>
+      <data_sharing>
+        <kind>OFF</kind>
+      </data_sharing>
+    </qos>
+    <historyMemoryPolicy>PREALLOCATED_WITH_REALLOC</historyMemoryPolicy>
+  </data_writer>
+
+  <data_reader profile_name="default subscription profile" is_default_profile="true">
+    <qos>
+      <data_sharing>
+        <kind>OFF</kind>
+      </data_sharing>
+    </qos>
+    <historyMemoryPolicy>PREALLOCATED_WITH_REALLOC</historyMemoryPolicy>
+  </data_reader>
+</profiles>

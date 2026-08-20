@@ -1,0 +1,7 @@
+ekf_fusion_node:
+  ros__parameters:
+    # Stage 12 conservative odom1 candidate; overlays the final configuration.
+    odom1_pose_rejection_threshold: 3.676532258
+    lidar_odom_safety.max_innovation_m: 0.4078499769
+    lidar_odom_safety.max_state_update_m: 0.02390630202
+    lidar_odom_safety.min_update_interval_sec: 0.1737458867

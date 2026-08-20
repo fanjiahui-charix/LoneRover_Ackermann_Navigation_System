@@ -1,0 +1,5 @@
+This package is derived from robot_localization, whose source files retain
+their original BSD-3-Clause license headers.
+
+Real-vehicle adaptation code for OriginCar Pro is distributed under the same
+BSD-3-Clause terms.

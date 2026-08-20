@@ -1,0 +1,52 @@
+local_navigator:
+  ros__parameters:
+    map_yaml: ""
+    control_period_ms: 50
+    goal_frame: "field"
+    field_anchor:
+      x: 0.0
+      y: 0.0
+      yaw: 0.0
+    laser_pose_in_base:
+      x: 0.0
+      y: 0.0
+      yaw: 0.0
+    scan_soft_timeout_sec: 0.3
+    scan_hard_timeout_sec: 0.6
+    odom_timeout_sec: 0.3
+    odom_jump_dist_m: 0.5
+    odom_jump_yaw_rad: 1.0
+    scan_odom_max_dt_sec: 0.2
+    soft_timeout_speed_factor: 0.5
+    transit_tolerance_m: 0.30
+    stop_tolerance_m: 0.12
+    max_recovery_attempts: 5
+    progress_min_dist_m: 0.05
+    progress_window_sec: 3.0
+    map_conflict_cycles: 10
+    planner:
+      grid_resolution: 0.05
+      grid_half_extent: 3.0
+      footprint_half_length_m: 0.22
+      footprint_half_width_m: 0.14
+      min_turning_radius_m: 0.35
+      obstacle_radius_m: 0.05
+      localization_margin_m: 0.05
+      speed_margin_per_mps: 0.05
+      max_speed_mps: 1.0
+      min_speed_mps: 0.05
+      a_lat_max: 2.0
+      a_brake: 1.0
+      a_accel: 1.0
+      t_latency_sec: 0.2
+      brake_margin_m: 0.10
+      n_curvatures: 31
+      dt_sec: 0.1
+      min_horizon_m: 0.5
+      goal_approach_distance_m: 0.5
+      treat_unknown_as_forbidden: true
+      w_goal: 1.0
+      w_clear: 0.3
+      w_smooth: 0.2
+      w_soft_cost: 0.4
+      min_feasible_length_m: 0.10

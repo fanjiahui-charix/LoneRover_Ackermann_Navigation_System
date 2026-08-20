@@ -1,0 +1,39 @@
+collision_monitor:
+  ros__parameters:
+    use_sim_time: false
+    base_frame_id: "base_link"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "/cmd_vel"
+    cmd_vel_out_topic: "/cmd_vel_safe"
+    transform_tolerance: 0.3
+    # Accept the measured scan age with a bounded window, while retaining
+    # outage stopping for a stale external LaserScan source.
+    source_timeout: 0.60
+    base_shift_correction: true
+    # Keep an emergency stop pulse short; this is independent of scan
+    # freshness and must not be enlarged to compensate for scan latency.
+    stop_pub_timeout: 0.30
+
+    observation_sources: ["scan"]
+    scan:
+      type: "scan"
+      # Keep one timestamp-preserving filtered scan source for the final
+      # collision guard. Derived cone centers are consumed by costmaps only.
+      topic: "/scan"
+      enabled: true
+
+    # Normal route speed and cone avoidance belong to MPPI/RPP, the velocity
+    # smoother, semantic limiter and costmaps. Collision Monitor retains only
+    # one footprint-based approach guard; there are no broad slowdown/stop
+    # zones that can pulse the command during ordinary tracking.
+    polygons: ["FootprintApproach"]
+    FootprintApproach:
+      type: "polygon"
+      action_type: "approach"
+      footprint_topic: "/local_costmap/published_footprint"
+      time_before_collision: 0.45
+      simulation_time_step: 0.05
+      max_points: 5
+      visualize: true
+      polygon_pub_topic: "collision_monitor/approach"
+      enabled: true

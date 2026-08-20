@@ -1,0 +1,73 @@
+origincarpro_base_node:
+  ros__parameters:
+    serial_port: "/dev/ttyACM0"
+    baud_rate: 230400
+    odom_topic: "/odom/data_raw"
+    imu_raw_topic: "/imu/data_raw"
+    imu_fused_topic: "/imu/fused/data_raw"
+    cmd_vel_topic: "/cmd_vel"
+    # Independent chassis safety: stale upstream commands are actively replaced
+    # with a zero frame. This does not change steering calibration or Nav2 logic.
+    cmd_vel_timeout_sec: 0.30
+    odom_frame_id: "odom"
+    base_frame_id: "base_link"
+    # Hard frame contract: origin is the rear-axle centre projected to ground.
+    base_link_reference: "rear_axle_center_ground_projection"
+    imu_frame_id: "imu_link"
+    imu_fusion_mode: "six_axis"
+    imu_zero_calibration_seconds: 10.0
+    nine_axis_relative_orientation: true
+    imu_data_already_in_base_frame: true
+    imu_model: "ICM-20948"
+    accel_scale: 1670.65
+    gyro_scale: 0.00026644
+
+    # Stage 13 balanced wheel/IMU preprocessing.
+    odom_linear_scale: 1.117575645
+    odom_angular_scale: 1.44215
+    # Runtime residual correction is separate from the frozen startup estimate.
+    gyro_z_bias_correction: 0.00544759814
+    startup_bias_blend: 0.1523751608
+    odom_linear_deadzone: 0.006303495707
+    imu_yaw_rate_deadzone: 0.0005564782354
+    imu_zero_calibration_min_samples: 100
+    imu_zero_calibration_min_z_samples: 25
+    # STM32 sends gyro.z=0 while Flag_Stop is active; do not use those artificial
+    # zeros for startup bias and do not subtract residual bias from them at runtime.
+    ignore_forced_zero_gyro_z: true
+
+    accel_lsb_per_g: 16384.0
+    gyro_lsb_per_dps: 65.5
+    mag_ut_per_lsb: 0.15
+    use_offline_imu_calibration: true
+    acc_ta: [0.9979185, 0.06063074, -0.01994913, 0.0, 0.99630423, 0.03006998, 0.0, 0.0, 0.98492733]
+    acc_ba: [-0.10020325, 0.04078356, 0.01187877]
+    gyro_bias: [-0.00000295, 0.00001533, -0.00000668]
+    roll_pitch_alpha: 0.98
+    yaw_gyro_alpha: 0.98
+    mag_declination_rad: 0.0
+
+    odom_pose_covariance: [0.2, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.2, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 999.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 999.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 999.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.5]
+
+    odom_twist_covariance: [0.04491191328, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 1.366735788e-06, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 999.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 999.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 999.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.35650878]
+
+    imu_orientation_covariance: [0.05, 0.0, 0.0, 0.0, 0.05, 0.0, 0.0, 0.0, 0.10]
+    imu_angular_velocity_covariance: [0.02, 0.0, 0.0,
+                                        0.0, 0.02, 0.0,
+                                        0.0, 0.0, 0.03115996343]
+    imu_linear_acceleration_covariance: [0.10, 0.0, 0.0, 0.0, 0.10, 0.0, 0.0, 0.0, 0.10]
+
+    laser_xyz: [0.067, 0.0, 0.146]
+    laser_rpy: [0.0, 0.0, 0.0]
+    imu_xyz: [0.019, -0.036, 0.048]
+    imu_rpy: [0.0, 0.0, 0.0]

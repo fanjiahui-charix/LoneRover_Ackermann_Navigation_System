@@ -1,0 +1,27 @@
+static_frames_publisher:
+  ros__parameters:
+    # origincarpro_base 已经发布 base_link -> imu_link，这里默认不重复发。
+    # 以下外参保留为与 origincarpro_base 对齐的兜底值；
+    # 如果走统一覆盖层，优先改 vehicle_profile.yaml。
+    publish_imu_tf: false
+    imu.parent_frame: base_link
+    imu.child_frame: imu_link
+    imu.x: 0.019
+    imu.y: -0.036
+    imu.z: 0.048
+    imu.roll: 0.0
+    imu.pitch: 0.0
+    imu.yaw: 0.0
+
+    # origincarpro_base 已经发布 base_link -> laser_link，这里默认不重复发。
+    # 若后续临时需要导航侧兜底发布，沿用 origincarpro_base 同一组外参；
+    # 如果走统一覆盖层，优先改 vehicle_profile.yaml。
+    publish_laser_tf: false
+    laser.parent_frame: base_link
+    laser.child_frame: laser_link
+    laser.x: 0.067
+    laser.y: 0.0
+    laser.z: 0.146
+    laser.roll: 0.0
+    laser.pitch: 0.0
+    laser.yaw: 0.0

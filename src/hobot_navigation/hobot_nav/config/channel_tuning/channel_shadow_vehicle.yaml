@@ -1,0 +1,35 @@
+schema_version: 1
+immutable_identified_plant:
+  wheelbase_m: 0.144
+  minimum_turning_radius_m: 0.35
+  command_delay_sec: 0.20225
+  speed_tau_sec: 0.11461
+  physical_accel_mps2: 0.3995
+  physical_brake_mps2: 1.03675
+  steering_tau_sec: 0.08632
+  effective_steering_gain: 0.96061
+  speed_gain: 1.05268
+  command_watchdog_sec: 0.30
+stress_scenarios:
+  nominal: {}
+  pose_xy_yaw:
+    start_offset_x_m: 0.02
+    start_offset_y_m: -0.02
+    start_offset_yaw_deg: 2.0
+  delay_plus20:
+    command_delay_scale: 1.20
+  steering_tau_plus20:
+    steering_tau_scale: 1.20
+  steering_gain_minus10:
+    steering_gain_scale: 0.90
+  combined:
+    start_offset_x_m: 0.02
+    start_offset_y_m: -0.02
+    start_offset_yaw_deg: 2.0
+    command_delay_scale: 1.20
+    steering_tau_scale: 1.20
+    steering_gain_scale: 0.90
+contracts:
+  editable_by_default: false
+  source: measured_vehicle_response
+  right_steering_dynamics: provisional_left_derived

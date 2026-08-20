@@ -1,0 +1,20 @@
+simple_lidar_odom:
+  ros__parameters:
+    # Stage 12 conservative publisher candidate; no new state-machine logic.
+    min_cone_correspondences: 4
+    min_cone_baseline_m: 1.525685881
+    min_cone_angle_span_rad: 1.710711830
+    max_mean_residual_m: 0.0246751851
+    min_hessian_eigenvalue: 0.4340030303
+    max_hessian_condition: 1531.869725
+    high_xy_gain: 0.9488666884
+    high_yaw_gain: 0.05
+    extra_high_streak: 2
+    cooldown_frames: 3
+    min_publish_interval_s: 0.1737458867
+    xy_covariance_base: 0.01879654182
+    covariance_residual_scale: 1.035691223
+    covariance_eigenvalue_scale: 0.3400792863
+    covariance_condition_scale: 0.3368723875
+    covariance_correction_scale: 0.9162886246
+    yaw_covariance: 0.6365295481

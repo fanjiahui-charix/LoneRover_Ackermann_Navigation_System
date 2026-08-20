@@ -1,0 +1,44 @@
+schema_version: 2
+candidate:
+  tube_margin_m: 0.03
+  tube_role: primary
+  connector_nominal_length_m: 0.65
+  connector_longer_shadow_length_m: 0.75
+  cone_effective_radius_m: 0.13
+  runtime_promotion_allowed: false
+rpp:
+  # The default public profile uses fixed lookahead for predictable tracking.
+  # Compare alternatives in the shadow vehicle before changing the runtime
+  # values.
+  use_velocity_scaled_lookahead_dist: false
+  lookahead_time_sec: 0.35
+  lookahead_dist_m: 0.35
+  min_lookahead_dist_m: 0.35
+  max_lookahead_dist_m: 0.35
+  regulated_linear_scaling_min_radius_m: 0.40
+  regulated_linear_scaling_min_speed_mps: 0.35
+  max_allowed_time_to_collision_sec: 0.30
+speed:
+  straight_mode: selected_profile
+  corner_ceiling_mps: 0.50
+  # Keep the lane-change ceiling explicit so Tube selection and speed control
+  # remain independently tunable.
+  lane_change_ceiling_mps: 0.50
+corner_preview:
+  # Do not hold the corner ceiling over most of the loop.  These are the
+  # Brake shortly before high curvature and release promptly after it, while
+  # RPP lookahead remains independently tunable.
+  distance_m: 0.50
+  exit_hold_distance_m: 0.15
+  curvature_threshold_1pm: 0.15
+avoidance:
+  cone_trigger_lookahead_m: 1.25
+  cone_passed_return_margin_m: 0.45
+  cone_lateral_relevance_m: 0.27
+contracts:
+  hard_rmin_m: 0.35
+  preferred_rmin_m: 0.40
+  channel_side_static_margin_m: 0.03
+  straight_speed_owned_by_selected_profile: true
+  collision_detection_enabled: true
+  editable_by_candidate_freeze: true

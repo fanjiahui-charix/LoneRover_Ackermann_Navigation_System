@@ -1,0 +1,12 @@
+<library path="cone_layer">
+  <class name="lidar_perception::ConeLayer"
+         type="lidar_perception::ConeLayer"
+         base_class_type="nav2_costmap_2d::Layer">
+    <description>Short-lived semantic cone centers for global and local costmaps.</description>
+  </class>
+  <class name="lidar_perception::GateSideSoftLayer"
+         type="lidar_perception::GateSideSoftLayer"
+         base_class_type="nav2_costmap_2d::Layer">
+    <description>Global-only soft preference bands inside the two B-Gate meshes.</description>
+  </class>
+</library>

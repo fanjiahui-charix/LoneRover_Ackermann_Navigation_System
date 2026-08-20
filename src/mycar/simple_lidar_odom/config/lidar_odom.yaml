@@ -1,0 +1,117 @@
+simple_lidar_odom:
+  ros__parameters:
+    scan_topic: /scan
+    odom_topic: /lidar_odom
+    odom_frame: odom
+    base_frame: base_link
+    publish_tf: false
+
+    # Stage 13: sparse absolute odom1. LOW/MEDIUM/invalid frames are dropped.
+    invalid_publish_policy: drop
+    publish_pose_mode: absolute
+    publish_yaw: true
+    high_only: true
+    quality_diagnostics_enable: true
+    min_cone_correspondences: 4
+    min_cone_baseline_m: 1.412672112
+    min_cone_angle_span_rad: 1.583992435
+    max_mean_residual_m: 0.02682085338
+    min_hessian_eigenvalue: 0.3773939394
+    max_hessian_condition: 1531.869725
+    max_correction_norm_m: 0.4973780206
+    high_xy_gain: 0.9488666884
+    high_yaw_gain: 0.05
+    bootstrap_frames: 4
+    extra_high_streak: 1
+    cooldown_frames: 3
+    min_publish_interval_s: 0.1389967094
+    xy_covariance_base: 0.008543882646
+    covariance_residual_scale: 1.035691223
+    covariance_eigenvalue_scale: 0.3400792863
+    covariance_condition_scale: 0.3368723875
+    covariance_correction_scale: 0.9162886246
+    yaw_covariance: 0.3536275267
+
+    min_range: 0.15
+    max_range: 2.2
+    downsample_step: 1
+    min_scan_points: 3
+    # Stage 8 precision-first extractor used by this node itself.
+    seg_break_dist: 0.0965708121
+
+    cone_radius: 0.04
+    cone_radius_min: 0.0359875192
+    cone_radius_max: 0.0529781543
+    cone_min_pts: 5
+    cone_max_pts: 21
+    cone_max_span: 0.2035249622
+    cone_fit_max_rms: 0.0062363306
+
+    max_correspondence_dist: 0.20
+    max_mean_error: 0.05
+    min_correspondences: 3
+
+    icp_max_iterations: 15
+    icp_converge_translation: 0.001
+    icp_converge_rotation: 0.0005
+    robust_kernel_delta: 0.08
+    max_icp_step_translation: 0.10
+    max_icp_step_rotation: 0.15
+    meas_noise_std: 0.05
+    init_pose_std: 1.0e3
+    lambda_floor: 1.0e-6
+
+    cone_confirm_hits: 5
+    cone_tentative_prune_misses: 6
+    cone_confirm_max_dist: 0.16
+    confirmed_min_reobserve_hits: 2
+    confirmed_prune_misses: 0
+    max_persistent_cones: 30
+    reset_pose_on_map_reset: true
+
+    use_cv_prior: false
+
+    use_scan_deskew: true
+    # Short sweep deskew uses raw wheel twist; long-term prediction always
+    # replaces wheel wz with timestamp-aligned IMU gyro.z.
+    deskew_source: raw_odom
+    ekf_odom_topic: /odom
+    raw_odom_topic: /odom/data_raw
+    imu_topic: /imu/data_raw
+    deskew_odom_timeout: 0.20
+    deskew_imu_timeout: 0.20
+    deskew_require_stamp_not_newer_than_scan: true
+    deskew_min_lag_sec: 0.00
+    deskew_use_vx: true
+    deskew_use_vy: true
+    deskew_use_wz: true
+    deskew_twist_in_base_frame: true
+    deskew_max_abs_vx: 2.0
+    deskew_max_abs_vy: 0.5
+    deskew_max_abs_wz: 4.0
+    fallback_deskew_source: raw_odom_imu
+
+    local_map_frames: 30
+    fence_min_pts: 22
+    fence_split_residual: 0.1192992462
+    fence_split_max_depth: 5
+    fence_aspect_ratio: 23.5422608480
+    fence_merge_angle_tol: 0.0756576558
+    fence_merge_dist_tol: 0.0945249897
+    fence_assoc_angle_tol: 0.10
+    fence_max_residual_pts: 30
+    use_fence_residuals: false
+
+    covariance_min_x: 0.0025
+    covariance_min_y: 0.0025
+    covariance_min_yaw: 0.0225
+    covariance_fallback_x: 0.01
+    covariance_fallback_y: 0.01
+    covariance_fallback_yaw: 0.09
+
+    # Runtime authority is base_link -> LaserScan frame TF. Values below are
+    # startup fallbacks before the static transform becomes available.
+    laser_extrinsics_source: tf
+    laser_x_in_base: 0.067
+    laser_y_in_base: 0.0
+    laser_yaw_in_base: 0.0

@@ -1,0 +1,30 @@
+version: channel-cone-side-v1-20260807
+frame_id: map
+resolution_m: 0.01
+width: 500
+height: 500
+origin_xy_m:
+- 0.0
+- 0.0
+layout: row-major uint8; index=iy*width+ix; ix=floor((x-origin_x)/resolution), iy=floor((y-origin_y)/resolution)
+class_codes:
+  0: outside C yellow ring / ignore for channel lane choice
+  1: inner-side (closer to diagnosis-room boundary) -> choose OUTER tube
+  2: center deadband -> choose OUTER tube by conservative default
+  3: outer-side (closer to outer boundary) -> choose INNER tube
+center_deadband_abs_distance_difference_m: 0.05
+ring_outer:
+- 0.49
+- 2.92
+- 4.51
+- 4.58
+- 0.32
+ring_inner:
+- 1.0
+- 3.44
+- 4.0
+- 4.1
+- 0.11
+sha256: cc5ee4bf0f952f52432f4e7f46e36062d691c9388b3803edeb8bdbaddcfe6261
+note: This LUT classifies cone location only. It does not perform runtime footprint/swept-volume
+  planning.

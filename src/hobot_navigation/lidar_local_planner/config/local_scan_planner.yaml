@@ -1,0 +1,22 @@
+/local_scan_planner:
+  ros__parameters:
+    scan_topic: /scan
+    cmd_vel_topic: cmd_vel
+    control_rate: 10.0
+    scan_timeout: 0.5
+    max_planning_angle_deg: 100.0
+    front_sector_deg: 20.0
+    side_sector_deg: 60.0
+    stop_distance: 0.45
+    slow_distance: 1.20
+    turn_clearance_distance: 0.80
+    forward_speed: 0.35
+    min_forward_speed: 0.08
+    max_angular_speed: 1.20
+    turn_in_place_speed: 0.90
+    heading_gain: 1.80
+    heading_weight: 0.35
+    min_valid_range: 0.05
+    safety_bubble_radius: 0.10
+    scan_filter_enabled: true
+    scan_filter_window: 5

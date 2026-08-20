@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lidar Web Viewer</title>
+  <style>
+    :root {
+      --bg: #08131c;
+      --panel: rgba(8, 19, 28, 0.82);
+      --grid: rgba(120, 190, 255, 0.16);
+      --accent: #67e8f9;
+      --accent-2: #34d399;
+      --text: #d8ecf6;
+      --warn: #fb7185;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(52, 211, 153, 0.18), transparent 30%),
+        radial-gradient(circle at bottom, rgba(103, 232, 249, 0.14), transparent 35%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 16px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.32);
+    }
+    .header {
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .subtitle {
+      margin-top: 6px;
+      color: rgba(216, 236, 246, 0.74);
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 14px;
+    }
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 16px;
+      min-height: 0;
+      flex: 1;
+    }
+    .viewer {
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      width: 100%;
+      height: min(78vh, 900px);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(4, 12, 18, 0.96), rgba(9, 22, 33, 0.92));
+    }
+    .sidebar {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .label {
+      color: rgba(216, 236, 246, 0.72);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .value {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .status-ok { color: var(--accent-2); }
+    .status-bad { color: var(--warn); }
+    .mono {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      letter-spacing: 0.02em;
+    }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 60vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="panel header">
+    <div>
+      <div class="title">Lidar Web Viewer</div>
+      <div class="subtitle">Vehicle coordinate view: forward is <span class="mono">+X</span>, left is <span class="mono">+Y</span>.</div>
+    </div>
+    <div class="meta">
+      <div class="chip" id="status-chip">Connecting</div>
+      <div class="chip" id="frame-chip">frame: -</div>
+      <div class="chip" id="points-chip">points: 0</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="panel viewer">
+      <canvas id="radar"></canvas>
+    </div>
+    <div class="panel sidebar">
+      <div>
+        <div class="label">Scan Status</div>
+        <div class="value" id="status-text">Waiting for data</div>
+      </div>
+      <div>
+        <div class="label">Range Max</div>
+        <div class="value" id="range-max">-</div>
+      </div>
+      <div>
+        <div class="label">View Window</div>
+        <div class="value mono" id="view-window">-</div>
+      </div>
+      <div>
+        <div class="label">Angle Span</div>
+        <div class="value" id="angle-span">-</div>
+      </div>
+      <div>
+        <div class="label">Last Update</div>
+        <div class="value" id="last-update">-</div>
+      </div>
+      <div>
+        <div class="label">Front Clearance</div>
+        <div class="value" id="front-clearance">-</div>
+      </div>
+      <div>
+        <div class="label">Left Clearance</div>
+        <div class="value" id="left-clearance">-</div>
+      </div>
+      <div>
+        <div class="label">Right Clearance</div>
+        <div class="value" id="right-clearance">-</div>
+      </div>
+      <div>
+        <div class="label">View</div>
+        <div class="value mono">+X forward / +Y left</div>
+      </div>
+      <div>
+        <div class="label">Cluster Count</div>
+        <div class="value" id="cluster-count">0</div>
+      </div>
+      <div>
+        <div class="label">Nearest Cluster</div>
+        <div class="value" id="nearest-cluster">-</div>
+      </div>
+      <div>
+        <div class="label">Tips</div>
+        <div style="line-height: 1.6; color: rgba(216, 236, 246, 0.78);">
+          1. Start the lidar node first.<br>
+          2. Colored groups are clustered obstacles.<br>
+          3. If the browser cannot connect, check the car IP and port 8765.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('radar');
+    const ctx = canvas.getContext('2d');
+    const statusChip = document.getElementById('status-chip');
+    const frameChip = document.getElementById('frame-chip');
+    const pointsChip = document.getElementById('points-chip');
+    const statusText = document.getElementById('status-text');
+    const rangeMaxText = document.getElementById('range-max');
+    const viewWindowText = document.getElementById('view-window');
+    const angleSpanText = document.getElementById('angle-span');
+    const lastUpdateText = document.getElementById('last-update');
+    const frontClearanceText = document.getElementById('front-clearance');
+    const leftClearanceText = document.getElementById('left-clearance');
+    const rightClearanceText = document.getElementById('right-clearance');
+    const clusterCountText = document.getElementById('cluster-count');
+    const nearestClusterText = document.getElementById('nearest-cluster');
+
+    let latest = null;
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * ratio);
+      canvas.height = Math.floor(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      draw();
+    }
+
+    function worldToCanvas(xForward, yLeft, centerX, centerY, metersToPx) {
+      return {
+        x: centerX - yLeft * metersToPx,
+        y: centerY - xForward * metersToPx,
+      };
+    }
+
+    function formatMeters(value) {
+      return value > 0 ? `${value.toFixed(2)} m` : '-';
+    }
+
+    function computeClearance(scan, minAngle, maxAngle) {
+      let best = Number.POSITIVE_INFINITY;
+      scan.ranges.forEach((range, index) => {
+        if (range === null || range <= 0) {
+          return;
+        }
+        const angle = scan.angle_min + index * scan.angle_increment;
+        if (angle < minAngle || angle > maxAngle) {
+          return;
+        }
+        best = Math.min(best, range);
+      });
+      return Number.isFinite(best) ? best : 0;
+    }
+
+    function drawGrid(width, height, centerX, centerY, metersToPx, frontExtent, rearExtent, sideExtent) {
+      const leftExtent = sideExtent;
+      const rightExtent = sideExtent;
+      const spacing = frontExtent > 6 ? 1.0 : 0.5;
+
+      ctx.strokeStyle = 'rgba(120, 190, 255, 0.14)';
+      ctx.lineWidth = 1;
+
+      for (let x = -rearExtent; x <= frontExtent + 1e-6; x += spacing) {
+        const p1 = worldToCanvas(x, -leftExtent, centerX, centerY, metersToPx);
+        const p2 = worldToCanvas(x, rightExtent, centerX, centerY, metersToPx);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+
+        if (x >= 0) {
+          ctx.fillStyle = 'rgba(216, 236, 246, 0.44)';
+          ctx.font = '12px sans-serif';
+          ctx.fillText(`${x.toFixed(1)}m`, p2.x - 42, p2.y - 6);
+        }
+      }
+
+      for (let y = -rightExtent; y <= leftExtent + 1e-6; y += spacing) {
+        const p1 = worldToCanvas(-rearExtent, y, centerX, centerY, metersToPx);
+        const p2 = worldToCanvas(frontExtent, y, centerX, centerY, metersToPx);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+
+        if (Math.abs(y) > 1e-6) {
+          ctx.fillStyle = 'rgba(216, 236, 246, 0.44)';
+          ctx.font = '12px sans-serif';
+          ctx.fillText(`${y.toFixed(1)}`, p1.x + 6, p1.y - 4);
+        }
+      }
+
+      const xAxisStart = worldToCanvas(-rearExtent, 0, centerX, centerY, metersToPx);
+      const xAxisEnd = worldToCanvas(frontExtent, 0, centerX, centerY, metersToPx);
+      const yAxisStart = worldToCanvas(0, -rightExtent, centerX, centerY, metersToPx);
+      const yAxisEnd = worldToCanvas(0, leftExtent, centerX, centerY, metersToPx);
+
+      ctx.strokeStyle = 'rgba(103, 232, 249, 0.9)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(xAxisStart.x, xAxisStart.y);
+      ctx.lineTo(xAxisEnd.x, xAxisEnd.y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(yAxisStart.x, yAxisStart.y);
+      ctx.lineTo(yAxisEnd.x, yAxisEnd.y);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(103, 232, 249, 0.95)';
+      ctx.font = '13px sans-serif';
+      ctx.fillText('+X', xAxisEnd.x - 28, xAxisEnd.y - 8);
+      ctx.fillText('+Y', yAxisEnd.x + 8, yAxisEnd.y + 18);
+    }
+
+    function drawVehicle(centerX, centerY, metersToPx) {
+      const carLength = 0.34;
+      const carWidth = 0.24;
+      const rear = -0.06;
+      const front = rear + carLength;
+      const left = carWidth / 2;
+      const right = -carWidth / 2;
+
+      const pRearLeft = worldToCanvas(rear, left, centerX, centerY, metersToPx);
+      const pFrontRight = worldToCanvas(front, right, centerX, centerY, metersToPx);
+      const width = pRearLeft.x - pFrontRight.x;
+      const height = pRearLeft.y - pFrontRight.y;
+
+      ctx.fillStyle = 'rgba(52, 211, 153, 0.18)';
+      ctx.strokeStyle = 'rgba(52, 211, 153, 0.95)';
+      ctx.lineWidth = 2;
+      ctx.fillRect(pFrontRight.x, pFrontRight.y, width, height);
+      ctx.strokeRect(pFrontRight.x, pFrontRight.y, width, height);
+
+      const nose = worldToCanvas(front + 0.08, 0, centerX, centerY, metersToPx);
+      const noseLeft = worldToCanvas(front - 0.01, 0.06, centerX, centerY, metersToPx);
+      const noseRight = worldToCanvas(front - 0.01, -0.06, centerX, centerY, metersToPx);
+      ctx.fillStyle = 'rgba(52, 211, 153, 0.95)';
+      ctx.beginPath();
+      ctx.moveTo(nose.x, nose.y);
+      ctx.lineTo(noseLeft.x, noseLeft.y);
+      ctx.lineTo(noseRight.x, noseRight.y);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function clusterColor(index) {
+      const hue = (index * 57) % 360;
+      return {
+        fill: `hsla(${hue}, 92%, 68%, 0.95)`,
+        stroke: `hsla(${hue}, 92%, 72%, 0.85)`,
+        box: `hsla(${hue}, 92%, 72%, 0.38)`,
+      };
+    }
+
+    function drawCluster(cluster, clusterIndex, centerX, centerY, metersToPx) {
+      const colors = clusterColor(clusterIndex);
+      ctx.fillStyle = colors.fill;
+      cluster.points.forEach((point) => {
+        const pos = worldToCanvas(point.x, point.y, centerX, centerY, metersToPx);
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      const pMin = worldToCanvas(cluster.bbox_min_x, cluster.bbox_max_y, centerX, centerY, metersToPx);
+      const pMax = worldToCanvas(cluster.bbox_max_x, cluster.bbox_min_y, centerX, centerY, metersToPx);
+      ctx.strokeStyle = colors.box;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(pMin.x, pMin.y, pMax.x - pMin.x, pMax.y - pMin.y);
+
+      const center = worldToCanvas(cluster.centroid_x, cluster.centroid_y, centerX, centerY, metersToPx);
+      ctx.strokeStyle = colors.stroke;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, 6, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = colors.stroke;
+      ctx.font = '12px sans-serif';
+      ctx.fillText(`#${cluster.id}`, center.x + 8, center.y - 8);
+    }
+
+    function updateClusterInfo(clusters) {
+      clusterCountText.textContent = `${clusters.length}`;
+      if (!clusters.length) {
+        nearestClusterText.textContent = '-';
+        return;
+      }
+      const nearest = clusters.reduce((best, current) =>
+        current.min_range < best.min_range ? current : best
+      );
+      nearestClusterText.textContent = `#${nearest.id} @ ${nearest.min_range.toFixed(2)} m`;
+    }
+
+    function drawScan(scan) {
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const maxRange = Math.max(scan.range_max || 0, 0.5);
+      const frontExtent = Math.max(scan.view_front_range || 5.0, 0.5);
+      const rearExtent = Math.max(scan.view_rear_range || 1.0, 0.2);
+      const sideExtent = Math.max(scan.view_side_range || 3.0, 0.5);
+      const margin = 36;
+      const centerX = width / 2;
+      const centerY = height - margin - rearExtent * ((height - margin * 2) / (frontExtent + rearExtent));
+      const metersToPx = Math.min(
+        (width / 2 - margin) / sideExtent,
+        (height - margin * 2) / (frontExtent + rearExtent)
+      );
+
+      ctx.fillStyle = '#08131c';
+      ctx.fillRect(0, 0, width, height);
+      drawGrid(width, height, centerX, centerY, metersToPx, frontExtent, rearExtent, sideExtent);
+      drawVehicle(centerX, centerY, metersToPx);
+
+      let validCount = 0;
+      const clusters = scan.clusters || [];
+      clusters.forEach((cluster, clusterIndex) => {
+        validCount += cluster.points.length;
+        drawCluster(cluster, clusterIndex, centerX, centerY, metersToPx);
+      });
+
+      pointsChip.textContent = `points: ${validCount}`;
+      rangeMaxText.textContent = `${maxRange.toFixed(2)} m`;
+      viewWindowText.textContent = `x:[-${rearExtent.toFixed(1)}, ${frontExtent.toFixed(1)}] y:[-${sideExtent.toFixed(1)}, ${sideExtent.toFixed(1)}]`;
+      angleSpanText.textContent = `${((scan.angle_max - scan.angle_min) * 180 / Math.PI).toFixed(1)} deg`;
+      frontClearanceText.textContent = formatMeters(computeClearance(scan, -20 * Math.PI / 180, 20 * Math.PI / 180));
+      leftClearanceText.textContent = formatMeters(computeClearance(scan, 20 * Math.PI / 180, 80 * Math.PI / 180));
+      rightClearanceText.textContent = formatMeters(computeClearance(scan, -80 * Math.PI / 180, -20 * Math.PI / 180));
+      updateClusterInfo(clusters);
+    }
+
+    function draw() {
+      if (!latest || !latest.ready) {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        ctx.fillStyle = '#08131c';
+        ctx.fillRect(0, 0, width, height);
+        const frontExtent = 5.0;
+        const rearExtent = 1.0;
+        const sideExtent = 3.0;
+        const metersToPx = Math.min((width / 2 - 36) / sideExtent, (height - 72) / (frontExtent + rearExtent));
+        const centerY = height - 36 - rearExtent * metersToPx;
+        drawGrid(width, height, width / 2, centerY, metersToPx, frontExtent, rearExtent, sideExtent);
+        drawVehicle(width / 2, centerY, metersToPx);
+        ctx.fillStyle = 'rgba(216, 236, 246, 0.72)';
+        ctx.font = '18px sans-serif';
+        ctx.fillText('Waiting for /scan ...', 24, 36);
+        return;
+      }
+      drawScan(latest);
+    }
+
+    async function fetchScan() {
+      try {
+        const response = await fetch('/scan', { cache: 'no-store' });
+        const data = await response.json();
+        latest = data;
+        if (data.ready) {
+          statusChip.textContent = 'Online';
+          statusChip.className = 'chip status-ok';
+          statusText.textContent = 'Receiving /scan';
+          statusText.className = 'value status-ok';
+          frameChip.textContent = `frame: ${data.frame_id || '-'}`;
+          lastUpdateText.textContent = new Date().toLocaleTimeString();
+        } else {
+          statusChip.textContent = 'No Data';
+          statusChip.className = 'chip status-bad';
+          statusText.textContent = data.message || 'No scan received';
+          statusText.className = 'value status-bad';
+        }
+        draw();
+      } catch (error) {
+        latest = null;
+        statusChip.textContent = 'Disconnected';
+        statusChip.className = 'chip status-bad';
+        statusText.textContent = 'Cannot reach viewer service';
+        statusText.className = 'value status-bad';
+        frameChip.textContent = 'frame: -';
+        pointsChip.textContent = 'points: 0';
+        rangeMaxText.textContent = '-';
+        viewWindowText.textContent = '-';
+        angleSpanText.textContent = '-';
+        lastUpdateText.textContent = '-';
+        frontClearanceText.textContent = '-';
+        leftClearanceText.textContent = '-';
+        rightClearanceText.textContent = '-';
+        clusterCountText.textContent = '0';
+        nearestClusterText.textContent = '-';
+        draw();
+      }
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    fetchScan();
+    setInterval(fetchScan, 120);
+  </script>
+</body>
+</html>

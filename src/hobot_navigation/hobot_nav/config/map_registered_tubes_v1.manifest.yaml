@@ -1,0 +1,25 @@
+map_registered_tube_library:
+  version: 2026-08-02-map-v1-1cm-nominal-only
+  csv: map_registered_tubes_v1.csv
+  csv_sha256: 697249cee2c26e3af3b681d02c21134b43dde19c9973d2d1de719d2756ce7b51
+  generator: ../scripts/generate_map_registered_tubes.py
+  map_frame: map
+  source_map: ../maps/rdk_2026_hospital_static_1cm.pgm
+  source_map_sha256: b67e83beb688fc627836da2df7a105a34ab6e431c50c8b7f406671f378ba6482
+  minimum_turning_radius_m: 0.35
+  pose_spacing_m_max: 0.015
+  nominal_footprint_audit_step_m: 0.02
+  green_collision_count: 0
+  grid_collision_count: 0
+  direction_order:
+    CW: [CENTER_BRANCH, SW, NW, NE, SE, RETURN_SPLIT]
+    CCW: [CENTER_BRANCH, SE, NE, NW, SW, RETURN_SPLIT]
+  normal_offsets_m:
+    inner: 0.03
+    center: 0.00
+    outer: -0.03
+  runtime_load_allowed: false
+  admission_reason: >-
+    Nominal map registration and swept-footprint audit pass, but robust error
+    envelopes, cone layouts, steering-rate tracking and repeated X5 vehicle
+    trials have not yet met the admission policy.
