@@ -9,8 +9,8 @@
 
 仓库入口：
 
-- [工具总览](tools/README.md)：Ackermann 车模、EKF、倒车 LUT、Tube/RPP 和 Native X5 shadow；
-- [比赛导航包](src/hobot_navigation/hobot_nav/README.md)：启动、参数、地图、行为树和任务状态机；
+- [工具总览](tools/README_CN.md)：Ackermann 车模、EKF、倒车 LUT、Tube/RPP 和 Native X5 shadow；
+- [比赛导航包](src/hobot_navigation/hobot_nav/README_CN.md)：启动、参数、地图、行为树和任务状态机；
 - [比赛入口说明](src/hobot_navigation/hobot_nav/README_COMPETITION.md)：唯一的正式比赛启动命令；
 - [通道调参文档](docs/channel_tuning/README.md)：Tube、RPP、连接段和候选部署流程。
 

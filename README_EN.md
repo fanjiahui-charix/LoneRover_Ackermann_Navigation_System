@@ -382,8 +382,8 @@ scripts/deploy_x5.sh             # generic deployment helper
 ~~~
 
 The most useful directory entry points are [tools/README.md](tools/README.md),
-[hobot_navigation/README.md](src/hobot_navigation/README.md), and
-[hobot_nav/README_COMPETITION.md](src/hobot_navigation/hobot_nav/README_COMPETITION.md).
+[hobot_navigation/README_EN.md](src/hobot_navigation/README_EN.md), and
+[hobot_nav/README_COMPETITION_EN.md](src/hobot_navigation/hobot_nav/README_COMPETITION_EN.md).
 
 ### 7. Build and run
 

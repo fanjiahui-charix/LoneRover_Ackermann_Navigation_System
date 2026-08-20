@@ -89,7 +89,7 @@ owner and match the actual installation.
 
 ROS 2 Humble and Nav2 are external dependencies. The repository does not vendor
 the robot platform SDK, image stack, lidar driver or Nav2 source. See the root
-[`docs/DEPENDENCIES.md`](../../docs/DEPENDENCIES.md) for the official upstream
+[`docs/DEPENDENCIES.md`](../../../docs/DEPENDENCIES.md) for the official upstream
 links and the platform-specific build notes.
 
 ## Related documentation
@@ -100,4 +100,4 @@ links and the platform-specific build notes.
   tracking assets;
 - [`config/`](config/): Nav2, vehicle and costmap parameters;
 - [`runtime/`](runtime/): compact generated assets;
-- [`tools/README.md`](../../tools/README.md): offline navigation utilities.
+- [`tools/README.md`](../../../tools/README.md): offline navigation utilities.

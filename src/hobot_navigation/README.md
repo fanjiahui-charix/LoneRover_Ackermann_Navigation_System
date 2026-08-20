@@ -19,4 +19,5 @@ ros2 launch hobot_nav navigation_core.launch.py
 ```
 
 具体话题、TF、构建依赖和运行边界见
+[`hobot_nav/README_CN.md`](hobot_nav/README_CN.md)。英文说明见
 [`hobot_nav/README.md`](hobot_nav/README.md)。
