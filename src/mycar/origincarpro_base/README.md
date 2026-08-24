@@ -29,6 +29,11 @@ least the serial device, wheel/steering calibration, IMU calibration and lidar
 extrinsic before using another vehicle. The package deliberately contains no
 camera, image-processing or vendor SDK integration.
 
+Calibration utilities live in the repository-level
+[`tools/calibration/`](../../../tools/calibration/README_EN.md). They cover
+servo PWM/angle PCHIP fitting, six-face IMU calibration, stationary gyro bias,
+and lower-controller serial collection.
+
 ## Run the base interface
 
 ```bash

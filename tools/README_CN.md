@@ -11,6 +11,7 @@
 | Native shadow replay | `nav2_native_shadow_replay.py`、`offline_mppi_shadow_sim.py` | 在不驱动车辆的情况下回放导航 |
 | 速度命令分析 | `analyze_command_envelope.py`、`plot_limiter_ab.py` | 分析速度、曲率、加速度和限制器行为 |
 | 底盘标定 | `stm32_ackermann_calibration.py` | 检查舵机和轮速标定 |
+| 舵机/IMU 标定 | `calibration/` | PWM—转角拟合、六面 IMU、陀螺零偏和串口采集 |
 
 推荐流程：
 
@@ -29,4 +30,9 @@ python3 tools/ackermann_shadow_plant.py --help
 python3 tools/channel_tuning/generate_channel_tubes_v2.py --help
 python3 tools/generate_reverse_gate_lut.py --help
 python3 tools/nav2_native_shadow_replay.py --help
+python3 tools/calibration/calibrate_imu_six_face.py --help
+python3 tools/calibration/fit_servo_pwm_angle_pchip.py --help
 ```
+
+标定工具的详细流程见 [`tools/calibration/README.md`](calibration/README.md)，英文说明见
+[`tools/calibration/README_EN.md`](calibration/README_EN.md)。

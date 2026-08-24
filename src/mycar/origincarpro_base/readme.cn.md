@@ -20,3 +20,6 @@ IMU、发布 IMU/雷达静态 TF，并把经过上层限制的 `Twist` 命令转
 
 `config/origincarpro_base.yaml` 是当前车模参数。公开包不包含相机、图像处理或厂商
 SDK；换车时至少要修改串口、底盘标定、IMU 标定和雷达外参。
+
+标定脚本在仓库根目录的 [`tools/calibration/`](../../../tools/calibration/README.md)：
+舵机 PWM—转角 PCHIP、六面 IMU 椭球拟合、静止陀螺零偏和下位机串口采集都在这里。

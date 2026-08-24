@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">六面 IMU 加速度计标定示意图</title>
+  <desc id="desc">依次采集加速度计 X、Y、Z 轴正负六个朝向，进行椭球仿射拟合，输出 acc_ba 和 acc_ta。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7fbff"/>
+      <stop offset="1" stop-color="#eef3f8"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#1e3a5f" flood-opacity="0.16"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#356b9e"/>
+    </marker>
+    <style>
+      .title { font: 700 30px sans-serif; fill: #17324d; }
+      .subtitle { font: 16px sans-serif; fill: #567086; }
+      .face { font: 700 20px sans-serif; fill: #17324d; }
+      .small { font: 14px sans-serif; fill: #567086; }
+      .formula { font: 700 17px monospace; fill: #17324d; }
+      .axisx { stroke: #d94b4b; stroke-width: 4; marker-end: url(#arrow); }
+      .axisy { stroke: #3a9b65; stroke-width: 4; marker-end: url(#arrow); }
+      .axisz { stroke: #4278bd; stroke-width: 4; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1200" height="680" rx="22" fill="url(#bg)"/>
+  <text x="54" y="58" class="title">六面 IMU 加速度计标定</text>
+  <text x="56" y="88" class="subtitle">每个姿态保持静止，采集原始加速度，拟合零偏、尺度和非正交误差</text>
+
+  <g transform="translate(54,130)">
+    <rect width="500" height="410" rx="18" fill="#ffffff" filter="url(#shadow)"/>
+    <text x="28" y="38" class="face">1. 依次采集六个面</text>
+    <text x="28" y="64" class="small">+X / -X / +Y / -Y / +Z / -Z</text>
+
+    <g transform="translate(38,93)">
+      <rect x="0" y="0" width="125" height="125" rx="14" fill="#f8e7e7" stroke="#d94b4b" stroke-width="2"/>
+      <rect x="185" y="0" width="125" height="125" rx="14" fill="#e7f4ec" stroke="#3a9b65" stroke-width="2"/>
+      <rect x="370" y="0" width="92" height="125" rx="14" fill="#e7eff9" stroke="#4278bd" stroke-width="2"/>
+      <rect x="0" y="170" width="125" height="125" rx="14" fill="#f8e7e7" stroke="#d94b4b" stroke-width="2"/>
+      <rect x="185" y="170" width="125" height="125" rx="14" fill="#e7f4ec" stroke="#3a9b65" stroke-width="2"/>
+      <rect x="370" y="170" width="92" height="125" rx="14" fill="#e7eff9" stroke="#4278bd" stroke-width="2"/>
+
+      <g transform="translate(62,63)"><rect x="-22" y="-18" width="44" height="36" rx="5" fill="#fff" stroke="#17324d" stroke-width="2"/><line x1="0" y1="-18" x2="0" y2="-58" class="axisx"/><text x="-15" y="52" class="face">+X</text></g>
+      <g transform="translate(247,63)"><rect x="-22" y="-18" width="44" height="36" rx="5" fill="#fff" stroke="#17324d" stroke-width="2"/><line x1="0" y1="18" x2="0" y2="58" class="axisy"/><text x="-15" y="52" class="face">+Y</text></g>
+      <g transform="translate(416,63)"><rect x="-22" y="-18" width="44" height="36" rx="5" fill="#fff" stroke="#17324d" stroke-width="2"/><line x1="0" y1="-18" x2="0" y2="-58" class="axisz"/><text x="-15" y="52" class="face">+Z</text></g>
+      <g transform="translate(62,233)"><rect x="-22" y="-18" width="44" height="36" rx="5" fill="#fff" stroke="#17324d" stroke-width="2"/><line x1="0" y1="18" x2="0" y2="58" class="axisx"/><text x="-15" y="52" class="face">-X</text></g>
+      <g transform="translate(247,233)"><rect x="-22" y="-18" width="44" height="36" rx="5" fill="#fff" stroke="#17324d" stroke-width="2"/><line x1="0" y1="-18" x2="0" y2="-58" class="axisy"/><text x="-15" y="52" class="face">-Y</text></g>
+      <g transform="translate(416,233)"><rect x="-22" y="-18" width="44" height="36" rx="5" fill="#fff" stroke="#17324d" stroke-width="2"/><line x1="0" y1="18" x2="0" y2="58" class="axisz"/><text x="-15" y="52" class="face">-Z</text></g>
+    </g>
+  </g>
+
+  <line x1="584" y1="336" x2="666" y2="336" stroke="#356b9e" stroke-width="5" marker-end="url(#arrow)"/>
+  <g transform="translate(690,130)">
+    <rect width="456" height="410" rx="18" fill="#ffffff" filter="url(#shadow)"/>
+    <text x="28" y="38" class="face">2. 拟合与验证</text>
+    <text x="28" y="80" class="formula">a_cal = acc_ta · (a - acc_ba)</text>
+    <ellipse cx="228" cy="214" rx="145" ry="88" fill="none" stroke="#d94b4b" stroke-width="3" stroke-dasharray="8 7" transform="rotate(-18 228 214)"/>
+    <circle cx="228" cy="214" r="88" fill="none" stroke="#3a9b65" stroke-width="4"/>
+    <line x1="228" y1="214" x2="355" y2="172" class="axisx"/>
+    <line x1="228" y1="214" x2="141" y2="275" class="axisy"/>
+    <line x1="228" y1="214" x2="228" y2="105" class="axisz"/>
+    <text x="30" y="330" class="small">椭球拟合：估计 bias、尺度、</text>
+    <text x="30" y="353" class="small">轴间耦合和非正交误差</text>
+    <text x="30" y="386" class="small">检查六面校准后的模长是否接近 g</text>
+  </g>
+
+  <g transform="translate(54,575)">
+    <rect width="1092" height="65" rx="14" fill="#17324d"/>
+    <text x="28" y="28" font-family="sans-serif" font-size="15" fill="#b9d8ef">输出到 origincarpro_base.yaml</text>
+    <text x="28" y="50" class="formula" fill="#ffffff">acc_ba = [bx, by, bz]    acc_ta = [T00, T01, ..., T22]</text>
+  </g>
+</svg>
