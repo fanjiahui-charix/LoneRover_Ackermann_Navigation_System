@@ -3,7 +3,7 @@
 路径切换只在已有 Tube 和连接段之间进行。连接段需要满足端点位姿、方向、footprint 净空和最小转弯半径约束；在线选择失败时应保持当前安全路径，由上层决定后续处理。
 
 ```bash
-python3 tools/channel_tuning/generate_channel_connectors_v2.py --help
+python3 tools/channel_tuning/generate_channel_connectors.py --help
 python3 tools/channel_tuning/evaluate_channel_connectors.py --help
 ```
 

@@ -11,9 +11,9 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-TOOLS = Path(__file__).resolve().parents[1]
-if str(TOOLS) not in sys.path:
-    sys.path.insert(0, str(TOOLS))
+CHANNEL_TUNING = Path(__file__).resolve().parent
+if str(CHANNEL_TUNING) not in sys.path:
+    sys.path.insert(0, str(CHANNEL_TUNING))
 
 from channel_asset_common import audit_path, load_map, read_path_csv, sha256_file  # noqa: E402
 

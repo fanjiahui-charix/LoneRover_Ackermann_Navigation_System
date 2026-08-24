@@ -13,7 +13,7 @@ from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parents[2]
 PACKAGE = WORKSPACE / "src/hobot_navigation/hobot_nav"
-GENERATOR = WORKSPACE / "tools/generate_channel_tubes_v2.py"
+GENERATOR = WORKSPACE / "tools/channel_tuning/generate_tube_paths.py"
 EVALUATOR = Path(__file__).with_name("evaluate_channel_tubes.py")
 VISUALIZER = Path(__file__).with_name("visualize_channel_assets.py")
 

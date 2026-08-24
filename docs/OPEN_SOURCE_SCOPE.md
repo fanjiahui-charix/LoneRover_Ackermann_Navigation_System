@@ -8,7 +8,7 @@ contains the code and assets needed to study and build the navigation core:
 - external `LaserScan` processing, cone clustering and costmap layers;
 - static-map Nav2 configuration, Smac Hybrid-A* planning and Ackermann BTs;
 - RPP/local tracking interfaces, Tube paths, reverse-entry LUTs and offline
-  shadow-vehicle tuning tools;
+  virtual-vehicle tuning tools;
 - the URDF/RViz vehicle model used for virtual and real-vehicle parameter work.
 
 The following are intentionally excluded from this public tree:

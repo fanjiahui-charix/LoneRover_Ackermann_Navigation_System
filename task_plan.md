@@ -20,3 +20,10 @@
 - Move lower-controller calibration into the lower-controller requirements section.
 - Document the executable PWM, six-face IMU, filtering, and gyro-bias workflow.
 - Remove the six-face SVG asset and all references to it.
+
+## Structure amendment
+
+- Remove the unused `mycar_navigation` package after checking all external references.
+- Rename ambiguous public tool entry points and update imports, tests, and documentation.
+- Group LUT, vehicle-model, Tube/RPP, calibration, and offline-analysis tools by responsibility.
+- Re-run source-reference, syntax, and local-link checks before committing.

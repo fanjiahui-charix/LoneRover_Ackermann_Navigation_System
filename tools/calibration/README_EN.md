@@ -14,10 +14,10 @@ The race vehicle is asymmetric in left and right steering. A single linear ratio
 
 ```text
 angle -> PWM       lower-controller command conversion
-PWM   -> angle     offline analysis, shadow plant, and effective-angle checks
+PWM   -> angle     offline analysis, virtual vehicle, and effective-angle checks
 ```
 
-`fit_servo_pwm_angle_pchip.py` accepts measured CSV files or the original Excel layout and exports piecewise cubic coefficients in both directions. The CSV files under `data/` are the measured means for the published vehicle profile. `stm32_ackermann_calibration.py` and `servo_fit.c` contain the matching runtime lookup implementation.
+`fit_servo_pwm_angle_pchip.py` accepts measured CSV files or the original Excel layout and exports piecewise cubic coefficients in both directions. The CSV files under `data/` are the measured means for the published vehicle profile. `../vehicle_model/ackermann_vehicle_model.py` and `servo_fit.c` contain the matching vehicle-model and runtime lookup implementation.
 
 ```bash
 python3 tools/calibration/fit_servo_pwm_angle_pchip.py \

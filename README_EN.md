@@ -92,12 +92,13 @@ competition_command_limiter
 serial chassis interface and steering/motor execution
 ~~~
 
-The custom velocity logic in mycar_navigation also covers curvature-based
-speed limiting, braking distance, goal-approach speed, and acceleration
-ramps. adaptive_speed_limiter combines local costmap, LiDAR, path, odometry,
-and TF freshness to reduce speed when curvature, available distance, obstacle
-margin, or goal distance requires it. Expired context fails closed instead of
-allowing an unsafe speed.
+The custom velocity logic is split between the `hobot_nav`
+`ackermann_command_limiter` and `adaptive_speed_limiter`. The former enforces
+the Ackermann minimum turning radius, forward/reverse direction, lateral
+acceleration, and mission gates. The latter combines local costmap, LiDAR,
+path, odometry, and TF state into a speed limit based on curvature, available
+distance, obstacle margin, goal distance, and data freshness. Expired context
+fails closed instead of allowing an unsafe speed.
 
 Velocity smoothing enforces temporal continuity. The final limiter then checks
 the Ackermann turning radius, direction, lateral acceleration, and mission
@@ -216,14 +217,14 @@ correction by mission stage.
   failure, stale sensors, and completion have explicit outcomes;
 - **Offline LUT**: continuous reverse-entry search is moved offline; runtime
   selects a finite candidate set and performs costmap revalidation;
-- **Virtual-real integration**: URDF/Xacro, RViz models, an Ackermann shadow
+- **Virtual-real integration**: URDF/Xacro, RViz models, an Ackermann virtual
   plant, Nav2 replay, and rosbag analysis tools are retained;
 - **Observability**: mission events, paths, velocities, odometry, costmaps,
   cones, and runtime state can be recorded and reviewed offline.
 
 The main tool index is [tools/README.md](tools/README.md). It lists the
-Ackermann shadow plant, EKF analysis, reverse LUT, Tube/RPP tuning, and native
-X5 shadow replay tools.
+Ackermann virtual-vehicle simulation, EKF analysis, reverse LUT, Tube/RPP
+tuning, and native X5 virtual-vehicle replay tools.
 
 ### 3. Core implementation and engineering trade-offs
 
@@ -316,7 +317,7 @@ Only after that should the results be written back to
 
 1. **Wheel and chassis scale**: drive slowly forward, backward, and through a
    measured rotation. Check `/odom/data_raw`, then tune `odom_linear_scale`
-   and `odom_angular_scale`. `tools/stm32_ackermann_calibration.py` provides
+   and `odom_angular_scale`. `tools/vehicle_model/ackermann_vehicle_model.py` provides
    the current Ackermann geometry and steering-response checks.
 2. **PWM to actual steering angle**: do not model PWM as one straight line.
    Sweep the servo from the left limit to the right limit, measure the front
@@ -434,23 +435,14 @@ src/
 │   ├── origincarpro_base/       # STM32 serial, chassis feedback, wheel/IMU
 │   ├── ekf_fusion/              # wheel + IMU 2D EKF
 │   ├── origincar_description/   # URDF/Xacro and RViz vehicle model
-│   ├── mycar_navigation/        # ordinary navigation interface
-│   ├── mycar_calibration/       # camera and vehicle calibration
-│   ├── mycar_sensor/            # USB camera
-│   └── mycar_record/             # capture and offline review helpers
+│   └── simple_lidar_odom/       # standalone LiDAR geometry odometry experiment
 ├── hobot_navigation/
 │   ├── hobot_nav/               # competition entry, Supervisor, map, LUT, Tube
-│   ├── n10_driver/              # N10 LiDAR driver
 │   ├── lidar_perception/        # filtering, cone clustering, costmap layers
-│   └── adaptive_speed_limiter/  # speed limiter
-├── hobot_vision/
-│   ├── hbmem_wechatcode/        # QR recognition
-│   ├── board_crop/              # sign crop and detection adapter
-│   └── hobot_ollama/            # asynchronous VLM sidecar
-├── hobot_msgs/                  # custom ROS messages
-└── 3rdparty/                    # Hobot/TROS interface packages
+│   ├── adaptive_speed_limiter/  # curvature, clearance, and goal-approach limits
+│   └── lidar_web_viewer/        # lightweight LiDAR topic viewer
 robot_dev_config/                # X5 cross-compilation and dependency config
-tools/                           # LUT, Tube, EKF, and offline analysis tools
+tools/                           # vehicle model, reverse entry, Tube, EKF, and analysis tools
 docs/                            # Tube, RPP, deployment, and tuning notes
 findings.md                      # supplemental historical notes; not runtime
 progress.md                      # supplemental phase notes; not runtime
@@ -657,7 +649,7 @@ Running RViz directly on the X5 can add load and display latency, especially
 with global/local costmaps, LiDAR points, camera streams, and multiple paths.
 A practical workflow is:
 
-- record navigation topics and runtime snapshots with mycar_record;
+- record navigation topics and runtime state in a user-provided rosbag;
 - inspect frequency, timestamps, paths, TF, velocity, and event timelines in
   Foxglove;
 - use RViz for final spatial confirmation of map, TF, cone layers, and vehicle
@@ -692,22 +684,22 @@ required to build or start the competition system:
 
 This section is intentionally retained because testing every parameter on the
 physical vehicle is slow and expensive. The workflow combines real vehicle
-data, the actual RDK X5 Nav2 configuration, and an Ackermann shadow plant with
+data, the actual RDK X5 Nav2 configuration, and an Ackermann virtual vehicle with
 delayed response.
 
 #### 1. Fit the vehicle response from real data
 
-tools/offline_mppi_shadow_sim.py aligns /cmd_vel_safe and /odom from recorded
+tools/vehicle_model/offline_vehicle_response_sim.py aligns /cmd_vel_safe and /odom from recorded
 data and estimates command delay, longitudinal response time, and angular-rate
 response. The vehicle model explicitly represents command delay, speed change,
 and steering response rather than assuming instantaneous motion.
 
-#### 2. Ackermann shadow plant
+#### 2. Ackermann virtual vehicle
 
-tools/ackermann_shadow_plant.py advances a virtual vehicle using velocity,
+tools/vehicle_model/ackermann_vehicle_simulator.py advances a virtual vehicle using velocity,
 steering, acceleration, minimum turning radius, and response delay. Nav2,
-costmaps, MPPI, RPP, smoothing, and the limiter can run against the shadow
-vehicle. Shadow topics are isolated and must never publish to the real
+costmaps, MPPI, RPP, smoothing, and the limiter can run against the virtual
+vehicle. Virtual-vehicle topics are isolated and must never publish to the real
 /cmd_vel_safe.
 
 #### 3. Final verification with native X5 Nav2
@@ -728,10 +720,10 @@ full-vehicle tests.
 Useful files include:
 
 - src/mycar/origincar_description/: URDF/Xacro, RViz model, and display launch;
-- tools/ackermann_shadow_plant.py: delayed Ackermann vehicle model;
-- tools/nav2_native_shadow_replay.py: native Nav2 + virtual chassis replay;
-- tools/offline_mppi_shadow_sim.py: rosbag-based trajectory comparison;
-- tools/generate_reverse_gate_lut.py and tools/generate_channel_tubes_v2.py:
-  reverse LUT and Tube generation.
+- tools/vehicle_model/ackermann_vehicle_simulator.py: delayed Ackermann vehicle model;
+- tools/vehicle_model/nav2_virtual_vehicle_replay.py: native Nav2 + virtual chassis replay;
+- tools/vehicle_model/offline_vehicle_response_sim.py: rosbag-based trajectory comparison;
+- tools/reverse_entry/ and tools/channel_tuning/: reverse-entry LUT and Tube
+  generation and validation.
 
 For the complete tool list, see [tools/README.md](tools/README.md).

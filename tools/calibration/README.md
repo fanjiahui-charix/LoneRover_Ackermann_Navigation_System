@@ -17,7 +17,7 @@ angle -> PWM       下位机执行命令
 PWM   -> angle     离线分析、车模和有效转角估计
 ```
 
-`fit_servo_pwm_angle_pchip.py` 接受测量 CSV 或原始 Excel 表，并导出两个方向的分段三次多项式。仓库里的 `data/servo_*_pwm_angle.csv` 是当前公开车模的测量均值，`stm32_ackermann_calibration.py` 和 `servo_fit.c` 是对应的运行时查表实现。
+`fit_servo_pwm_angle_pchip.py` 接受测量 CSV 或原始 Excel 表，并导出两个方向的分段三次多项式。仓库里的 `data/servo_*_pwm_angle.csv` 是当前公开车模的测量均值，`../vehicle_model/ackermann_vehicle_model.py` 和 `servo_fit.c` 是对应的车模与运行时查表实现。
 
 ```bash
 python3 tools/calibration/fit_servo_pwm_angle_pchip.py \

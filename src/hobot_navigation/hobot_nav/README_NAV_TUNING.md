@@ -11,10 +11,10 @@
 1 cm 是当前公开地图配置。5 mm 和 1 mm 可用于几何诊断，但会增加实时计算和可视化负担。
 
 ```bash
-python3 tools/ackermann_shadow_plant.py --help
+python3 tools/vehicle_model/test_ackermann_vehicle_simulator.py
 python3 tools/channel_tuning/evaluate_channel_tubes.py --help
-python3 tools/nav2_native_shadow_replay.py --help
-python3 tools/offline_mppi_shadow_sim.py --help
+python3 tools/vehicle_model/nav2_virtual_vehicle_replay.py --help
+python3 tools/vehicle_model/offline_vehicle_response_sim.py --help
 ```
 
 数据路径必须通过参数显式传入，个人录包和实验输出不属于仓库内容。

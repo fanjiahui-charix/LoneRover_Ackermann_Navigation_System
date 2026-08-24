@@ -5,7 +5,6 @@
 
 - `hobot_nav`：Nav2 参数、静态地图、行为树、Tube/LUT、代价地图入口和速度限制；
 - `lidar_perception`：外部二维雷达输入的滤波、锥桶聚类和代价地图层；
-- `lidar_local_planner`：轻量雷达局部规划参考实现；
 - `lidar_web_viewer`：只查看 `LaserScan` 的低负载网页工具；
 - `adaptive_speed_limiter`：曲率、障碍物间距和目标距离相关的速度限制。
 

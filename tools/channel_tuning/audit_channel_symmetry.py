@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Audit directional Tube and Ackermann shadow symmetry without ROS.
+"""Audit directional Tube and Ackermann vehicle-response symmetry without ROS.
 
 The STM32 calibration is a right-front-wheel angle/PWM map.  This tool keeps
 that physical layer separate from the identified actuator gain and reports
-both the exact kinematic mirror and the current shadow response mirror.
+both the exact kinematic mirror and the current identified response mirror.
 """
 
 from __future__ import annotations
@@ -16,11 +16,14 @@ from pathlib import Path
 
 import sys
 
-TOOLS = Path(__file__).resolve().parents[1]
-if str(TOOLS) not in sys.path:
-    sys.path.insert(0, str(TOOLS))
+CHANNEL_TUNING = Path(__file__).resolve().parent
+if str(CHANNEL_TUNING) not in sys.path:
+    sys.path.insert(0, str(CHANNEL_TUNING))
+VEHICLE_MODEL = CHANNEL_TUNING.parent / "vehicle_model"
+if str(VEHICLE_MODEL) not in sys.path:
+    sys.path.insert(0, str(VEHICLE_MODEL))
 
-from stm32_ackermann_calibration import (  # noqa: E402
+from ackermann_vehicle_model import (  # noqa: E402
     WHEELBASE_M,
     TRACK_WIDTH_M,
     center_yaw_rate_from_right_wheel_angle,

@@ -2,9 +2,9 @@
 
 本目录保留不依赖任务层、视觉和设备驱动的几何与离线调参工具。
 
-- `generate_channel_tubes_v2.py`：生成中心、内侧、外侧 Tube 候选；
+- `generate_tube_paths.py`：生成中心、内侧、外侧 Tube 候选；
 - `evaluate_channel_tubes.py`：检查路径顺序、闭合、footprint 和曲率；
-- `generate_channel_connectors_v2.py`：生成 Tube 之间的连接段；
+- `generate_channel_connectors.py`：生成 Tube 之间的连接段；
 - `evaluate_channel_connectors.py`：检查连接段端点和净空；
 - `generate_channel_cone_avoid_map.py`：生成锥桶侧向避障表；
 - `evaluate_channel_avoid_map.py`：评估避障表；

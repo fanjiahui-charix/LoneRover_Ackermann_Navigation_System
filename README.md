@@ -7,7 +7,7 @@
 
 仓库入口：
 
-- [工具总览](tools/README_CN.md)：Ackermann 车模、EKF、倒车 LUT、Tube/RPP 和 Native X5 shadow；
+- [工具总览](tools/README_CN.md)：Ackermann 车模、EKF、倒车 LUT、Tube/RPP 和 Native X5 虚拟车辆回放；
 - [比赛导航包](src/hobot_navigation/hobot_nav/README_CN.md)：启动、参数、地图、行为树和任务状态机；
 - [比赛入口说明](src/hobot_navigation/hobot_nav/README_COMPETITION.md)：唯一的正式比赛启动命令；
 - [通道调参文档](docs/channel_tuning/README.md)：Tube、RPP、连接段和候选部署流程。
@@ -61,7 +61,7 @@ competition_command_limiter
 底盘串口与舵机/电机执行
 ```
 
-速度侧的自写逻辑还包括 `mycar_navigation` 里的曲率限速、刹车距离、目标点接近速度和加速度斜坡，以及 `adaptive_speed_limiter` 里的局部 costmap、雷达、路径、odom 和 TF 联合限速。它会根据曲率、前方可用距离、障碍物余量、距离目标点的距离和数据新鲜度压低速度；上下文过期时进入 fail-closed，停止输出危险速度。
+速度侧的自写逻辑主要在 `hobot_nav` 的 `ackermann_command_limiter` 和 `adaptive_speed_limiter`。前者处理 Ackermann 最小转弯半径、前进/倒车方向、横向加速度和任务闸门，后者把局部 costmap、雷达、路径、odom 和 TF 的状态合成速度上限，并根据曲率、前方可用距离、障碍物余量、目标距离和数据新鲜度压低速度；上下文过期时进入 fail-closed，停止输出危险速度。
 
 速度平滑要解决的是时间连续性：控制器的速度变化不能直接跳到车上，必须受到最大速度、最大加速度、最大减速度和控制周期约束。最终 limiter 再检查 Ackermann 最小转弯半径、前进/倒车方向、横向加速度和任务阶段闸门。这样 Nav2、速度控制、底盘标定和安全策略各自有明确边界。
 
@@ -137,7 +137,7 @@ ekf_fusion ───────── 轮式里程计 + IMU → odom → base_l
 - **完整任务状态机 + Nav2 Behavior Tree**：任务状态管理 P 点、二维码、方向、扫码点、倒车入口、通道、出口和回 P，行为树管理每段导航动作；
 - **有限状态和失败出口**：导航取消、超时、重规划失败、传感器过期和任务完成都有明确状态；
 - **离线 LUT**：把倒车入口的连续搜索提前做掉，运行时只查有限候选并做 costmap 复核；
-- **虚实结合**：保留 URDF/Xacro、RViz 车模、Ackermann shadow plant、Nav2 replay 和 rosbag 分析工具；
+- **虚实结合**：保留 URDF/Xacro、RViz 车模、Ackermann 虚拟车模、Nav2 回放和 rosbag 分析工具；
 - **可观测性**：记录任务事件、路径、速度、odom、costmap、锥桶和运行状态，方便离线定位问题。
 
 ### 三、核心实现与关键取舍
@@ -187,7 +187,7 @@ LUT 的价值在于把车上最容易发散的一段搜索提前做完。LUT 由
 
 标定不要从 EKF 开始。先让下位机只输出原始轮速和 IMU 数据，确认方向、单位、时间戳和串口帧都正常，再把标定结果写回 `origincarpro_base.yaml`。建议按下面的顺序做：
 
-1. **轮速和底盘运动比例**：让车低速前进、后退和原地转动，用已知距离和角度检查 `/odom/data_raw`，确认方向后再调整 `odom_linear_scale` 和 `odom_angular_scale`。`tools/stm32_ackermann_calibration.py` 提供了当前 Ackermann 车模的几何换算和转角检查函数。
+1. **轮速和底盘运动比例**：让车低速前进、后退和原地转动，用已知距离和角度检查 `/odom/data_raw`，确认方向后再调整 `odom_linear_scale` 和 `odom_angular_scale`。`tools/vehicle_model/ackermann_vehicle_model.py` 提供了当前 Ackermann 车模的几何换算和转角检查函数。
 2. **PWM—实际转角**：不要把 PWM 和转角当成一条直线。让舵机从左限位扫到右限位，在真实 RDK X5 车模上逐点测量前轮转角，左右两侧分别保存为 CSV，列名为 `pwm,angle_deg`。运行下面的脚本生成左右两套 PCHIP 分段系数：
 
    ```bash
@@ -274,23 +274,14 @@ src/
 │   ├── origincarpro_base/       # STM32 串口、底盘反馈、轮速、IMU、静态 TF
 │   ├── ekf_fusion/              # 轮式里程计 + IMU 的 2D EKF
 │   ├── origincar_description/   # 车模、URDF/Xacro、RViz 离线可视化
-│   ├── mycar_navigation/        # 普通导航接口
-│   ├── mycar_calibration/       # 相机和车辆标定工具
-│   ├── mycar_sensor/             # USB 相机
-│   └── mycar_record/             # rosbag 录制、运行状态快照和离线复盘辅助
+│   └── simple_lidar_odom/       # 独立的雷达几何里程计实验包
 ├── hobot_navigation/
 │   ├── hobot_nav/               # 比赛入口、Supervisor、状态机、地图、LUT、Tube
-│   ├── n10_driver/              # N10 雷达驱动
 │   ├── lidar_perception/        # 滤波、锥桶聚类和 costmap layer
-│   └── adaptive_speed_limiter/  # 速度限制器
-├── hobot_vision/
-│   ├── hbmem_wechatcode/        # 二维码识别
-│   ├── board_crop/              # 立牌 crop 和检测适配
-│   └── hobot_ollama/            # 异步 VLM sidecar
-├── hobot_msgs/                  # 自定义 ROS 消息
-└── 3rdparty/                    # Hobot/TROS 接口包
+│   ├── adaptive_speed_limiter/  # 曲率、净空和目标接近速度限制
+│   └── lidar_web_viewer/        # 雷达话题的轻量查看器
 robot_dev_config/                # X5 交叉编译和依赖配置
-tools/                           # LUT、Tube、EKF 和离线分析工具
+tools/                           # 车模、倒车入口、Tube、EKF 和离线分析工具
 docs/                            # Tube、RPP、部署和调参记录
 findings.md                      # 工程附录（历史整理，不参与运行）
 progress.md                      # 阶段附录（历史整理，不参与运行）
@@ -446,7 +437,7 @@ Tube 轨迹只覆盖通道内部的通过段。车辆出通道后，Supervisor �
 
 车端直接运行 RViz 在 X5 上容易产生较高负载和显示延迟，尤其是全局 costmap、局部 costmap、雷达点、相机和多个 Path 同时打开时。我更建议：
 
-- 用 `mycar_record` 录导航话题和运行快照；
+- 用用户自行准备的 rosbag 记录导航话题和运行状态；
 - 用 Foxglove 查看话题频率、时间戳、Path、TF、速度和事件时间线；
 - 用 RViz 做地图、TF、锥桶层和机器人空间关系的最后确认；
 - 不要在车辆运动时为了看图打开一堆高带宽显示和调试节点。
@@ -474,22 +465,22 @@ Tube 轨迹只覆盖通道内部的通过段。车辆出通道后，Supervisor �
 
 #### 1. 用真实数据拟合车模响应
 
-`tools/offline_mppi_shadow_sim.py` 可以读取真实 rosbag，对 `/cmd_vel_safe` 和 `/odom` 做时间对齐，估计命令传输延迟、纵向响应时间常数和角速度响应时间常数。车模将命令延迟、速度变化和转向响应显式建模，避免把车辆当作瞬时响应系统，使离线轨迹与真实车辆更接近。
+`tools/vehicle_model/offline_vehicle_response_sim.py` 可以读取真实 rosbag，对 `/cmd_vel_safe` 和 `/odom` 做时间对齐，估计命令传输延迟、纵向响应时间常数和角速度响应时间常数。车模将命令延迟、速度变化和转向响应显式建模，避免把车辆当作瞬时响应系统，使离线轨迹与真实车辆更接近。
 
-#### 2. Ackermann shadow plant
+#### 2. Ackermann 虚拟车模
 
-`tools/ackermann_shadow_plant.py` 根据速度、转角、加速度、车辆最小转弯半径和响应延迟推进虚拟车辆。Nav2、costmap、MPPI、RPP、速度平滑和 limiter 可以对着虚拟车辆运行，输出通过 shadow topic 隔离，不能直接碰真实车的 `/cmd_vel_safe`。
+`tools/vehicle_model/ackermann_vehicle_simulator.py` 根据速度、转角、加速度、车辆最小转弯半径和响应延迟推进虚拟车辆。Nav2、costmap、MPPI、RPP、速度平滑和 limiter 可以对着虚拟车辆运行，输出通过 virtual topic 隔离，不能直接碰真实车的 `/cmd_vel_safe`。
 
 #### 3. 用真实 X5 Nav2 做最终复核
 
-电脑上的轻量模型适合快速扫参数，最终候选还要放到 RDK X5 上用实际安装的 Nav2、`SmacPlannerHybrid`、MPPI、VelocitySmoother 和 costmap 做 native shadow replay。这样可以把主机上跑得通、车上跑不动的候选尽早筛掉，也能发现 X5 CPU、DDS 和传感器回调带来的实时性问题。
+电脑上的轻量模型适合快速扫参数，最终候选还要放到 RDK X5 上用实际安装的 Nav2、`SmacPlannerHybrid`、MPPI、VelocitySmoother 和 costmap 做虚拟车辆回放。这样可以把主机上跑得通、车上跑不动的候选尽早筛掉，也能发现 X5 CPU、DDS 和传感器回调带来的实时性问题。
 
 #### 4. LUT、Tube 和参数一起验证
 
 倒车 LUT 在 X5 上调用实际的 `SmacPlannerHybrid` 逐个位姿生成和检查。Tube 则用真实车体尺寸、最小转弯半径、footprint 和锥桶避障约束生成，再用带延迟的虚拟车跑 RPP 跟踪。最后拿少量候选到真实车上做低速和完整任务验证。
 
 - `src/mycar/origincar_description/`：车辆 URDF/Xacro、RViz 模型和显示启动文件；
-- `tools/ackermann_shadow_plant.py`：根据速度、转角、加速度和舵机响应模拟车辆；
-- `tools/nav2_native_shadow_replay.py`：真实 Nav2 节点 + 虚拟底盘的闭环回放；
-- `tools/offline_mppi_shadow_sim.py`：直接读取 rosbag 做离线轨迹和参数对比；
-- `tools/generate_reverse_gate_lut.py`、`tools/generate_channel_tubes_v2.py`：倒车 LUT 和 Tube 轨迹的离线生成工具。
+- `tools/vehicle_model/ackermann_vehicle_simulator.py`：根据速度、转角、加速度和舵机响应模拟车辆；
+- `tools/vehicle_model/nav2_virtual_vehicle_replay.py`：真实 Nav2 节点 + 虚拟底盘的闭环回放；
+- `tools/vehicle_model/offline_vehicle_response_sim.py`：直接读取 rosbag 做离线轨迹和参数对比；
+- `tools/reverse_entry/`、`tools/channel_tuning/`：倒车入口 LUT 和 Tube 轨迹的离线生成与验证工具。

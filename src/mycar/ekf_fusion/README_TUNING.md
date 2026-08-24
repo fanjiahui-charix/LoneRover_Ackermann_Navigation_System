@@ -8,5 +8,5 @@
 4. 再用外部雷达里程计做离线 A/B 对比；
 5. 最后才调整过程噪声、观测协方差和异常观测阈值。
 
-仓库里的 `tools/analyze_ekf_bags.py` 可以读取用户自己准备的 rosbag 做统计。数据文件
+仓库里的 `tools/offline_analysis/analyze_ekf_bags.py` 可以读取用户自己准备的 rosbag 做统计。数据文件
 不随仓库发布，路径通过命令行传入。静态地图和导航规划不属于 EKF 的职责。

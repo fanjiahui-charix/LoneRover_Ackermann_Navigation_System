@@ -30,3 +30,12 @@
 ## 雷达边界
 
 公开导航包只约定外部雷达驱动提供 `/scan_raw`。滤波、去躁、锥桶聚类和代价地图图层属于本仓库；具体设备驱动属于外部适配层，不在公开版本中。
+
+## 2026-08-24 结构审计
+
+- `src/mycar/mycar_navigation/` 是独立的旧式 `local_navigator_node` 包，只在包内部互相引用；当前比赛入口和 Nav2 链路没有引用它；
+- `src/hobot_navigation/lidar_local_planner/` 同样只在包内部引用，当前雷达启动链路使用 Nav2 MPPI/RPP，没有启动这个旧式反应式节点；
+- 当前速度链路由 `adaptive_speed_limiter` 和 `hobot_nav` 的 `ackermann_command_limiter` 组成，根 README 不应再把速度逻辑归到已移除的 `mycar_navigation`；
+- `tools/vehicle_model/ackermann_vehicle_model.py` 提供的是 Ackermann 车模、舵机查表和几何换算函数，不是只能用于某一种下位机的标定程序；
+- `shadow` 在工具名中是控制工程术语，但公开仓库入口改成 `virtual_vehicle` 更直观；`reverse_gate` 统一改成 `reverse_entry`，与比赛文档中的“倒车入口”一致；
+- 工具按 `vehicle_model/`、`reverse_entry/`、`channel_tuning/`、`calibration/` 和 `offline_analysis/` 分组；Tube 共用的地图、footprint 和哈希函数放在 `channel_tuning/channel_asset_common.py`；重命名只涉及公开入口、导入和文档引用，不改变算法和输出格式。

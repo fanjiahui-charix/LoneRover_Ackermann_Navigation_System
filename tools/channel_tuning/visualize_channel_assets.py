@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Polygon
 
-TOOLS = Path(__file__).resolve().parents[1]
-if str(TOOLS) not in sys.path:
-    sys.path.insert(0, str(TOOLS))
+CHANNEL_TUNING = Path(__file__).resolve().parent
+if str(CHANNEL_TUNING) not in sys.path:
+    sys.path.insert(0, str(CHANNEL_TUNING))
 
 from channel_asset_common import (  # noqa: E402
     FOOTPRINT_BOUNDARY,

@@ -3,7 +3,7 @@
 公开 Tube 由 `inner`、`center`、`outer` 三个横向选择组成，每个选择包含 `cw` 和 `ccw` 两个方向。路径与 1 cm 地图、车辆 footprint 和最小转弯半径绑定。
 
 ```bash
-python3 tools/generate_channel_tubes_v2.py --help
+python3 tools/channel_tuning/generate_tube_paths.py --help
 python3 tools/channel_tuning/evaluate_channel_tubes.py --help
 python3 tools/channel_tuning/visualize_channel_assets.py --help
 ```

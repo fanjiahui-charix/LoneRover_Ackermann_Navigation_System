@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[4]
-REPLAY = (ROOT / "tools/nav2_native_shadow_replay.py").read_text()
+REPLAY = (ROOT / "tools/vehicle_model/nav2_virtual_vehicle_replay.py").read_text()
 
 
 def test_native_replay_feeds_scenario_cones_through_real_cone_layer_topic():

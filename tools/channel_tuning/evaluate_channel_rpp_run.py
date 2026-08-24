@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Score one native Channel RPP shadow run and emit uniform PASS/FAIL artifacts."""
+"""Score one native Channel RPP virtual-vehicle run and emit PASS/FAIL artifacts."""
 
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-TOOLS = Path(__file__).resolve().parents[1]
-if str(TOOLS) not in sys.path:
-    sys.path.insert(0, str(TOOLS))
+CHANNEL_TUNING = Path(__file__).resolve().parent
+if str(CHANNEL_TUNING) not in sys.path:
+    sys.path.insert(0, str(CHANNEL_TUNING))
 
 from channel_asset_common import (  # noqa: E402
     FOOTPRINT_FRONT_M, FOOTPRINT_HALF_WIDTH_M, FOOTPRINT_REAR_M,
