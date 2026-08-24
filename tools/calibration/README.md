@@ -33,9 +33,7 @@ cc -std=c99 -Wall -Wextra -pedantic -c \
 
 ## IMU 六面法和陀螺零偏
 
-![六面 IMU 标定示意图](../../docs/images/imu_six_face_calibration.svg)
-
-`collect_imu_six_face.py` 可以直接从下位机串口采集六个面的原始数据，`filter_accel_samples.py` 先按重力模长和主轴方向筛掉明显异常帧。`calibrate_imu_six_face.py` 读取带有 `face,ax,ay,az` 列的静态样本 CSV，也兼容采集脚本使用的 `pose` 列。六个面分别标记为 `+x,-x,+y,-y,+z,-z`，默认用椭球仿射拟合得到完整的 `acc_ta` 和 `acc_ba`，这和 `origincarpro_base` 的配置形式一致：
+六面法真正要确认的是：六个姿态覆盖完整，每个面保持静止，拟合后再检查重力模长。`collect_imu_six_face.py` 按 `+X/-X/+Y/-Y/+Z/-Z` 的顺序提示操作；`filter_accel_samples.py` 按重力模长和主轴方向筛掉明显异常帧；`calibrate_imu_six_face.py` 再读取带有 `face,ax,ay,az` 列的静态样本 CSV，也兼容采集脚本使用的 `pose` 列。
 
 ```text
 acc_calibrated = acc_ta @ (acc_measured - acc_ba)
@@ -44,28 +42,31 @@ acc_calibrated = acc_ta @ (acc_measured - acc_ba)
 如果只需要轴向偏置和尺度，可使用 `--model diagonal`。如果 CSV 是原始 LSB，可以用 `--accel-scale 16384 --gravity 1.0` 先在 g 单位下拟合；要复制到当前 `origincarpro_base.yaml`，建议使用车上对应的换算尺度，把样本先换算为 `m/s^2`，再运行工具。
 
 ```bash
-python3 tools/calibration/calibrate_imu_six_face.py \
-  --input six_face_samples.csv \
-  --output /tmp/imu_calibration.yaml
-
 python3 tools/calibration/collect_imu_six_face.py \
-  --port /dev/ttyACM0 --baud 115200 \
+  --port /dev/ttyACM0 --baud 230400 \
   --duration 60 --output accel_6pose.csv
 
 python3 tools/calibration/filter_accel_samples.py \
   --input accel_6pose.csv \
   --output accel_6pose_filtered.csv
 
+python3 tools/calibration/calibrate_imu_six_face.py \
+  --input accel_6pose_filtered.csv \
+  --accel-scale 1670.65 --gravity 9.80665 \
+  --output /tmp/imu_calibration.yaml
+
 python3 tools/calibration/estimate_gyro_bias.py \
   --input stationary_imu.csv \
   --output /tmp/gyro_bias.yaml
 
 python3 tools/calibration/collect_gyro_bias.py \
-  --port /dev/ttyACM0 --baud 115200 \
+  --port /dev/ttyACM0 --baud 230400 \
   --seconds 120 --output stationary_imu.csv
 ```
 
-陀螺零偏应在车体完全静止时采集。启动时静止统计得到的 bias 和离线 bias 不能重复扣除；`gyro_bias`、启动零偏、死区和下位机强制清零逻辑要放在同一条数据链路里检查。
+当前 `origincarpro_base.yaml` 使用原始加速度 LSB 到 `m/s^2` 的 `1670.65` 换算。如果只想在 `g` 单位下拟合，可以使用 `--accel-scale 16384 --gravity 1.0`，但输出不能不经换算就复制到使用 `m/s^2` 的配置中。换下位机或 IMU 后，还要确认 `imu_protocol.py` 的帧格式、加速度/陀螺单位和串口波特率。
+
+陀螺零偏应在车体完全静止时采集。启动时静止统计得到的 bias 和离线 bias 不能重复扣除；`gyro_bias`、启动零偏、死区和下位机强制清零逻辑要放在同一条数据链路里检查。六面拟合输出 YAML 中的 `face_norm_error` 应接近 0，再进行低速直线、左右转和停车验证。
 
 ## 和导航调参的关系
 

@@ -307,6 +307,84 @@ The default configuration shows serial, topic, and calibration parameters, but a
 new controller board, IMU, servo, or sensor installation requires
 recalibration. Check raw chassis data before starting EKF and navigation.
 
+##### Lower-controller calibration workflow
+
+Do not start with EKF tuning. First make the lower controller publish raw wheel
+and IMU data, then verify direction, units, timestamps, and serial framing.
+Only after that should the results be written back to
+`origincarpro_base.yaml`. A practical order is:
+
+1. **Wheel and chassis scale**: drive slowly forward, backward, and through a
+   measured rotation. Check `/odom/data_raw`, then tune `odom_linear_scale`
+   and `odom_angular_scale`. `tools/stm32_ackermann_calibration.py` provides
+   the current Ackermann geometry and steering-response checks.
+2. **PWM to actual steering angle**: do not model PWM as one straight line.
+   Sweep the servo from the left limit to the right limit, measure the front
+   wheel angle on the real RDK X5 vehicle model, and save left and right data
+   separately with CSV columns `pwm,angle_deg`. Fit the two monotone PCHIP
+   curves with:
+
+   ```bash
+   python3 tools/calibration/fit_servo_pwm_angle_pchip.py \
+     --left tools/calibration/data/servo_left_pwm_angle.csv \
+     --right tools/calibration/data/servo_right_pwm_angle.csv \
+     --output /tmp/servo_fit
+   ```
+
+   The output contains both `angle -> PWM` and `PWM -> angle`. `servo_fit.c/.h`
+   is a portable piecewise-cubic lookup implementation for a lower controller.
+   After changing the servo, horn, board, or mechanical linkage, remeasure the
+   center PWM, both limits, and the angle curve.
+3. **Six-face accelerometer calibration**: place `+X/-X/+Y/-Y/+Z/-Z` upward
+   one at a time and keep the vehicle still during each collection. With the
+   published serial frame, collect and fit the data as follows:
+
+   ```bash
+   python3 tools/calibration/collect_imu_six_face.py \
+     --port /dev/ttyACM0 --baud 230400 \
+     --duration 60 --output /tmp/accel_6pose.csv
+
+   python3 tools/calibration/filter_accel_samples.py \
+     --input /tmp/accel_6pose.csv \
+     --output /tmp/accel_6pose_filtered.csv
+
+   python3 tools/calibration/calibrate_imu_six_face.py \
+     --input /tmp/accel_6pose_filtered.csv \
+     --accel-scale 1670.65 --gravity 9.80665 \
+     --output /tmp/imu_calibration.yaml
+   ```
+
+   `1670.65` is the current configuration's conversion from raw
+   accelerometer LSB to `m/s^2`. A different IMU needs its own scale from the
+   datasheet or a measurement. For a fit in `g`, use
+   `--accel-scale 16384 --gravity 1.0`, but do not mix the two unit systems in
+   one YAML file. The default fit estimates the full ellipsoid-affine `acc_ba`
+   and `acc_ta` used as `acc_ta @ (acc_measured - acc_ba)`.
+4. **Gyro bias**: collect while the vehicle is completely still. Do not use
+   artificial `gyro.z=0` frames sent by the lower controller while the motor is
+   stopped:
+
+   ```bash
+   python3 tools/calibration/collect_gyro_bias.py \
+     --port /dev/ttyACM0 --baud 230400 \
+     --seconds 120 --output /tmp/stationary_imu.csv
+
+   python3 tools/calibration/estimate_gyro_bias.py \
+     --input /tmp/stationary_imu.csv \
+     --output /tmp/gyro_bias.yaml
+   ```
+
+   `gyro_bias`, startup zeroing, angular-rate dead zones, and forced-zero
+   handling must be applied once in one data path. After checking that every
+   calibrated face has an acceleration norm close to `g`, perform low-speed
+   straight, left-turn, right-turn, and stop tests, then check the raw IMU,
+   `/imu/fused/data_raw`, and EKF output.
+
+The complete input format, dependencies, and output files are documented in
+[`tools/calibration/README_EN.md`](tools/calibration/README_EN.md). The serial
+collectors follow the example STM32 frame in this repository; a different
+lower-controller protocol requires updating `tools/calibration/imu_protocol.py`.
+
 #### LiDAR, map, and camera requirements
 
 - N10 must publish a valid /scan_raw with usable scan_time and
@@ -590,40 +668,6 @@ A practical workflow is:
 Vehicle load, DDS, camera/LiDAR callbacks, and visualization can combine into a
 real-time problem. Recording first and inspecting offline is often faster than
 debugging a lagging RViz session.
-
-#### Lower-controller calibration: PWM-to-steering angle and six-face IMU
-
-Lower-controller calibration has a direct effect on navigation. Do not reduce
-the servo model to one “PWM increment equals angle increment” ratio: left and
-right steering are usually asymmetric, and the servo center has a dead zone.
-The practical procedure is to sweep PWM values, measure the actual front-wheel
-angle on the real vehicle model, fit the left and right sides independently,
-and keep both `angle -> PWM` and `PWM -> angle` mappings. The public tools use
-monotone PCHIP fitting and a piecewise-cubic runtime lookup. This makes the
-Ackermann geometry, the `SmacPlannerHybrid` minimum turning radius, reverse
-LUTs, Tube paths, and delayed vehicle simulation describe the same car.
-
-After changing the lower-controller board, servo, servo horn, or mechanical
-linkage, recheck the center PWM, both steering limits, and the curve. Follow
-the fit with low-speed straight, left-turn, right-turn, and stop tests; a
-good-looking fit plot is not enough.
-
-For the IMU, place the accelerometer in the six static orientations
-`+X/-X/+Y/-Y/+Z/-Z`, hold each one still, and fit `acc_ba` and `acc_ta`. Estimate
-gyro bias separately while the sensor is completely stationary. The current
-base interface applies:
-
-```text
-acc_calibrated = acc_ta @ (acc_measured - acc_ba)
-gyro_calibrated = gyro_measured - gyro_bias
-```
-
-Check that the calibrated acceleration norm is close to `g` for every face
-before copying the result into `origincarpro_base.yaml`. Startup zeroing,
-offline `gyro_bias`, and dead zones must not subtract the same bias twice. The
-collection, filtering, six-face fitting, and gyro-bias tools are documented in
-[`tools/calibration/README_EN.md`](tools/calibration/README_EN.md), with a
-visual overview in [`imu_six_face_calibration.svg`](docs/images/imu_six_face_calibration.svg).
 
 ### Competition references
 

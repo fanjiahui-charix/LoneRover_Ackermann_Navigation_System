@@ -183,6 +183,55 @@ LUT 的价值在于把车上最容易发散的一段搜索提前做完。LUT 由
 
 默认配置里可以看到串口、话题和标定参数，但换板子、换 IMU、换舵机或改安装位置后，不能直接沿用旧参数。先做底盘原始数据检查，再启动 EKF 和导航。
 
+##### 下位机标定流程
+
+标定不要从 EKF 开始。先让下位机只输出原始轮速和 IMU 数据，确认方向、单位、时间戳和串口帧都正常，再把标定结果写回 `origincarpro_base.yaml`。建议按下面的顺序做：
+
+1. **轮速和底盘运动比例**：让车低速前进、后退和原地转动，用已知距离和角度检查 `/odom/data_raw`，确认方向后再调整 `odom_linear_scale` 和 `odom_angular_scale`。`tools/stm32_ackermann_calibration.py` 提供了当前 Ackermann 车模的几何换算和转角检查函数。
+2. **PWM—实际转角**：不要把 PWM 和转角当成一条直线。让舵机从左限位扫到右限位，在真实 RDK X5 车模上逐点测量前轮转角，左右两侧分别保存为 CSV，列名为 `pwm,angle_deg`。运行下面的脚本生成左右两套 PCHIP 分段系数：
+
+   ```bash
+   python3 tools/calibration/fit_servo_pwm_angle_pchip.py \
+     --left tools/calibration/data/servo_left_pwm_angle.csv \
+     --right tools/calibration/data/servo_right_pwm_angle.csv \
+     --output /tmp/servo_fit
+   ```
+
+   输出里同时有 `angle -> PWM` 和 `PWM -> angle`。`servo_fit.c/.h` 是可以移植到下位机的分段三次查表实现；换舵机、摇臂、板子或车体结构后，中心 PWM、左右限幅和转角曲线都要重新测。
+3. **IMU 六面加速度计标定**：将 `+X/-X/+Y/-Y/+Z/-Z` 六个方向依次朝上，每个面固定不动采样。当前公开串口协议可以直接用采集脚本：
+
+   ```bash
+   python3 tools/calibration/collect_imu_six_face.py \
+     --port /dev/ttyACM0 --baud 230400 \
+     --duration 60 --output /tmp/accel_6pose.csv
+
+   python3 tools/calibration/filter_accel_samples.py \
+     --input /tmp/accel_6pose.csv \
+     --output /tmp/accel_6pose_filtered.csv
+
+   python3 tools/calibration/calibrate_imu_six_face.py \
+     --input /tmp/accel_6pose_filtered.csv \
+     --accel-scale 1670.65 --gravity 9.80665 \
+     --output /tmp/imu_calibration.yaml
+   ```
+
+   这里的 `1670.65` 对应当前配置把原始加速度 LSB 换算为 `m/s^2` 的尺度。换 IMU 后必须使用该 IMU 数据手册或实测得到的尺度；如果只想在 `g` 单位下拟合，可以使用 `--accel-scale 16384 --gravity 1.0`，但不能把两套单位混写进 YAML。脚本默认拟合完整的椭球仿射矩阵，输出 `acc_ba` 和 `acc_ta`，运行形式为 `acc_ta @ (acc_measured - acc_ba)`。
+4. **陀螺零偏**：车体完全静止时采样，不要用电机停止时下位机强制发送的 `gyro.z=0` 帧做统计。可以直接采集并估计：
+
+   ```bash
+   python3 tools/calibration/collect_gyro_bias.py \
+     --port /dev/ttyACM0 --baud 230400 \
+     --seconds 120 --output /tmp/stationary_imu.csv
+
+   python3 tools/calibration/estimate_gyro_bias.py \
+     --input /tmp/stationary_imu.csv \
+     --output /tmp/gyro_bias.yaml
+   ```
+
+   `gyro_bias`、启动静止零偏、角速度死区和下位机强制清零只能在同一条数据链路里处理一次，不能在多个节点重复扣除。最后检查每个 IMU 面校准后的加速度模长是否接近 `g`，再做低速直线、左右转和停车测试，确认原始反馈、`/imu/fused/data_raw` 和 EKF 输出都没有异常。
+
+完整的输入格式、依赖和输出文件说明见 [`tools/calibration/README.md`](tools/calibration/README.md)。这些串口采集脚本按仓库中的示例 STM32 帧解析；如果更换下位机协议，需要先修改 `tools/calibration/imu_protocol.py`，不能直接假设串口数据格式相同。
+
 #### 对雷达、地图和相机的要求
 
 - N10 雷达需要稳定发布 `/scan_raw`，`scan_time` 和 `time_increment` 不能是无效值；
@@ -403,21 +452,6 @@ Tube 轨迹只覆盖通道内部的通过段。车辆出通道后，Supervisor �
 - 不要在车辆运动时为了看图打开一堆高带宽显示和调试节点。
 
 很多问题来自车端负载、DDS、相机/雷达回调和可视化同时运行造成的实时性下降。先把数据录下来，再离线看，通常比盯着一台卡顿的 RViz 更快。
-
-#### 下位机标定：PWM—舵机转角和 IMU 六面法
-
-下位机标定对导航影响很直接。舵机不要只写一个“PWM 每增加多少就转多少度”的比例：左右转向通常不对称，舵机中心也有死区。实际做法是让舵机逐点输出 PWM，在真实车模上测量前轮实际转角，左右两侧分别拟合单调的分段曲线，同时保存 `angle -> PWM` 和 `PWM -> angle` 两个方向。当前公开工具使用 PCHIP 拟合，运行时用分段三次函数查表。这样得到的转角会更接近真实 Ackermann 几何，`SmacPlannerHybrid` 的最小转弯半径、倒车 LUT、Tube 轨迹和车模延迟仿真也才是在同一辆车上工作。
-
-换下位机板子、舵机、舵机摇臂或车体结构以后，中心 PWM、左右转角限幅和转角曲线都要重新确认。标定完还要做低速直线、左右转和停车测试，不能只看拟合图好不好看。
-
-IMU 方面，六面法先让加速度计的 `+X/-X/+Y/-Y/+Z/-Z` 六个方向分别朝上，保持静止采样，再拟合 `acc_ba` 和 `acc_ta`；陀螺零偏单独在完全静止时统计。当前底盘代码的处理形式是：
-
-```text
-acc_calibrated = acc_ta @ (acc_measured - acc_ba)
-gyro_calibrated = gyro_measured - gyro_bias
-```
-
-六面拟合输出后，要检查每个面校准后的加速度模长是否接近 `g`，再放回 `origincarpro_base.yaml` 验证。启动静止零偏、离线 `gyro_bias` 和死区不能在不同节点里重复扣除。相关采集、筛选、六面拟合和陀螺零偏工具见 [`tools/calibration/README.md`](tools/calibration/README.md)，示意图见 [`imu_six_face_calibration.svg`](docs/images/imu_six_face_calibration.svg)。
 
 ### 比赛资料
 
