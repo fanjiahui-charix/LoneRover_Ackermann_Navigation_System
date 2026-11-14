@@ -15,11 +15,11 @@ An Ackermann navigation system developed and tested on a physical competition ve
 
 ## Vehicle demo
 
-[![Early prototype, 1.90x playback](docs/media/early-prototype-preview.gif)](docs/media/early-prototype-demo.mp4)
+[![Real-vehicle closed-loop navigation demo](docs/media/preview.gif)](docs/media/demo.mp4)
 
-**[Watch the full demo · about 35 seconds, MP4](docs/media/early-prototype-demo.mp4)**
+**[Watch the full closed-loop demo (MP4)](docs/media/demo.mp4)**
 
-Early prototype recording at **1.90×** playback. The GIF is a 7-second excerpt; the full accelerated demo lasts about 35 seconds. [Poster](docs/media/early-prototype-poster.jpg) · [Media script](tools/media/prepare_demo.py)
+*Full closed-loop sequence: depart from P → scan the QR code and select direction → reverse into the entry using the LUT → follow Tube paths around obstacles in the narrow channel → return to P. The preview is sped up for convenient viewing. The repository includes multiple parameter profiles, from conservative tuning (`safe_05`) to high-speed competition settings (`race_07`–`race_09`), with measured completion times of approximately 35–40 s in the high-speed profiles.*
 
 ## Configuration at a glance
 
