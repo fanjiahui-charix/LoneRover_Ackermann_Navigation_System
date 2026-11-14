@@ -1,5 +1,17 @@
 # 比赛入口说明
 
+## 构建与车端依赖
+
+任务源码位于 [`src/competition_supervisor.cpp`](src/competition_supervisor.cpp)，Action 交接由 [`src/motion_action_arbiter.cpp`](src/motion_action_arbiter.cpp) 统一管理。代码与启动链路恢复自 [TarochLee/ros_workspace@aa018d6](https://github.com/TarochLee/ros_workspace/tree/aa018d6627b272c0797bab58faaa3dd07884f2d1)。
+
+```bash
+colcon build --packages-up-to hobot_nav \
+  --cmake-args -DBUILD_COMPETITION_SUPERVISOR=ON
+source install/local_setup.bash
+```
+
+车端需安装 N10、相机、QR、VLM、HDMI 与 BEV 链路对应的 ROS 包，并准备相机标定、BEV 模型/语义地图；通道准入资产随包安装在 `runtime/channel_v2/`。包名及 X5 构建方法见 [DEPENDENCIES.md](../../../docs/DEPENDENCIES.md)。比赛命令使用包内通道资产和对应摘要；相机、BEV 与 VLM 参数使用实际部署值。
+
 这是比赛现场使用的完整导航运行入口说明，记录第二十一届全国大学生智能汽车竞赛地瓜机器人智慧医疗赛的运行方式、地图、定位、规划、通道和速度输出链路。
 
 ## 比赛运行命令
@@ -14,6 +26,7 @@ systemctl stop lightdm
 
 ```bash
 export ROS_DOMAIN_ID=231
+CHANNEL_V2_DIR="$(ros2 pkg prefix hobot_nav)/share/hobot_nav/runtime/channel_v2"
 
 ros2 launch hobot_nav competition_runtime.launch.py \
   start_mission:=true \
@@ -36,9 +49,9 @@ ros2 launch hobot_nav competition_runtime.launch.py \
   qr_midcourse_replan_x:=1.6 \
   channel_avoidance_v2_enabled:=true \
   channel_templates_runtime_allowed:=true \
-  channel_v2_asset_directory:=/root/ros_workspace/channel_v2_active \
-  channel_v2_admission_sha256:=YOUR_CHANNEL_V2_ADMISSION_SHA256 \
-  channel_runtime_tuning_file:=/root/ros_workspace/channel_v2_active/configuration/channel_runtime_tuning.yaml \
+  channel_v2_asset_directory:="$CHANNEL_V2_DIR" \
+  channel_v2_admission_sha256:=f1b8d865214c67f7f4536806c66f5de47b5a055918a2a5f57fcfb9e251837870 \
+  channel_runtime_tuning_file:="$CHANNEL_V2_DIR/configuration/channel_runtime_tuning.yaml" \
   readiness_timeout_sec:=90 \
   capture_diagnostics_enabled:=false \
   competition_quiet_mode:=false \
@@ -46,8 +59,7 @@ ros2 launch hobot_nav competition_runtime.launch.py \
   log_level:=error
 ```
 
-这条命令加载已有的 1 cm 静态地图，不启动建图。`vlm_server_ip` 和
-`channel_v2_admission_sha256` 在文档中使用占位符，车端使用现场配置值。
+这条命令加载已有的 1 cm 静态地图，不启动建图。`vlm_server_ip` 使用现场服务器地址，通道摘要对应包内 `runtime/channel_v2/runtime_admission.csv`。
 ROS Domain 231 用于隔离不同车辆的 DDS 数据。
 
 ## 运行链路

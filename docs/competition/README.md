@@ -1,10 +1,7 @@
-# 比赛资料
+# 比赛任务链路
 
-这里放本工程对应的赛项方案和裁判参考手册，用来解释任务约束、比赛流程、计时和罚时规则。它们不是 ROS 2 构建依赖。
+车辆通过 QR 任务选择、倒车入口、通道跟踪和返程完成比赛导航。任务状态机由 [CompetitionSupervisor](../../src/hobot_navigation/hobot_nav/src/competition_supervisor.cpp) 管理；[MotionActionArbiter](../../src/hobot_navigation/hobot_nav/src/motion_action_arbiter.cpp) 统一发送、取消和交接 Nav2 Action。
 
-## 文件
+完整启动命令见[比赛入口说明](../../src/hobot_navigation/hobot_nav/README_COMPETITION.md)，安装依赖与构建选项见 [DEPENDENCIES.md](../DEPENDENCIES.md)。比赛流程、计时和罚则以主办方发布的赛项资料为准。
 
-- [第二十一届智能汽车竞赛地瓜机器人赛项方案](21届全国大学生智能汽车竞赛地瓜机器人赛项方案-20260316.docx)
-- [地瓜机器人智慧医疗赛比赛流程及裁判员参考手册](FireShot%20Capture%20114%20-%20裁判手册%20-%20第二十一届全国大学生智能汽车竞赛地瓜机器人智慧医疗赛比赛流程及裁判员参考手册.pdf)
-
-README 中的 P 点、顺/逆时针、通道、回 P、计时和罚时，结合这两份资料理解。
+[English](README_EN.md)

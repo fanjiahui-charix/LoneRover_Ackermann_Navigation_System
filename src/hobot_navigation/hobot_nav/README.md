@@ -4,11 +4,11 @@
 user-maintained base driver and EKF with Nav2, 2D lidar perception, costmaps,
 Ackermann command limiting, static maps and offline Tube/LUT assets.
 
-This package is intentionally not the private competition launcher. It does
-not contain camera code, zero-copy image code, QR recognition, VLM/YOLO/BEV
-code, task-specific mission state, proprietary models, or a lidar serial
-driver. The runtime task adapter and any vendor sensor driver must be supplied
-by the user of the package.
+The competition task coordinator is implemented in
+[`CompetitionSupervisor`](src/competition_supervisor.cpp), with Nav2 Action
+handover handled by [`MotionActionArbiter`](src/motion_action_arbiter.cpp).
+See [README_COMPETITION_EN.md](README_COMPETITION_EN.md) for its build option,
+vehicle dependencies and complete deployment command.
 
 ## Runtime chain
 
@@ -22,8 +22,7 @@ static map -> Nav2 global/local costmaps
 ```
 
 The public launch assumes an existing `/scan_raw` publisher and an existing
-`base_link -> laser_link` static transform. It does not guess a vendor driver
-or a serial protocol.
+`base_link -> laser_link` static transform. The bundled base driver supplies the sensor static transforms when enabled.
 
 ## Start the public stack
 
@@ -60,10 +59,10 @@ must be changed for another vehicle or track.
   choices in each direction;
 - waypoint auditing, shadow-vehicle tuning and native replay helpers.
 
-The task-level state machine used in the competition is deliberately outside
-this public package. A caller can submit ordinary `NavigateToPose` or
-`NavigateThroughPoses` goals, or build its own private task adapter around the
-same navigation interfaces.
+For ordinary navigation, a caller can submit `NavigateToPose` or
+`NavigateThroughPoses` goals to `navigation_core.launch.py`. The competition
+launch uses the Supervisor to coordinate its QR, reverse-entry, channel and
+return stages.
 
 ## Coordinate and interface contract
 

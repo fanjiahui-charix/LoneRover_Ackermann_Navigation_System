@@ -1,0 +1,14 @@
+mission_points:
+  ros__parameters:
+    frame_id: map
+    # 这一份是给默认 1 cm 静态图 rdk_2026_hospital_static_1cm.yaml 用的演练模板，
+    # 不是实车真值。后面上车请录你自己的 mission_points.yaml。
+    points:
+      P: [2.5, 0.6, 0.0]
+      A: [4.2, 1.2, 1.5708]
+      B: [2.5, 2.6, 1.5708]
+      C: [4.2, 4.1, 3.1416]
+    routes:
+      default: [P, A, B, C, P]
+      via_b: [P, A, B, C, P]
+      via_c: [P, A, C, P]

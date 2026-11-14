@@ -1,0 +1,15 @@
+mission_points:
+  ros__parameters:
+    # P was tape-measured from the map lower-left corner on 2026-07-19:
+    # base_link is 0.41 m to the right (+X), 0.21 m upward (+Y), facing +X.
+    # QR_NAV remains the temporary Region-A target pending final surveying.
+    calibrated: true
+    frame_id: map
+    points:
+      P: [0.41, 0.21, 0.0]
+      # NavigateToPose requires a yaw. This is only the natural P->QR approach
+      # direction; fixed-start goal checking intentionally ignores final yaw.
+      QR_NAV: [3.60, 1.20, 0.3009202343604251]
+    routes:
+      # P is alignment-only. The task sends exactly one goal: QR_NAV.
+      fixed_start: [QR_NAV]

@@ -18,8 +18,6 @@ from pathlib import Path
 from typing import Any, Iterable
 
 import numpy as np
-from rosbags.rosbag2 import Reader
-from rosbags.typesys import Stores, get_types_from_msg, get_typestore
 
 
 PI = math.pi
@@ -106,12 +104,17 @@ class MapData:
 
 
 def register_costmap_types(ts: Any) -> None:
+    from rosbags.typesys import get_types_from_msg
+
     msg_dir = Path("/opt/ros/humble/share/nav2_msgs/msg")
     ts.register(get_types_from_msg((msg_dir / "CostmapMetaData.msg").read_text(), "nav2_msgs/msg/CostmapMetaData"))
     ts.register(get_types_from_msg((msg_dir / "Costmap.msg").read_text(), "nav2_msgs/msg/Costmap"))
 
 
 def deserialize_bag(bag: Path) -> tuple[dict[str, list[tuple[float, float, float]]], list[PathData], list[TimedCostmap], list[TimedCostmap], MapData, list[tuple[float, float, float, float, float]], list[tuple[float, float, float]]]:
+    from rosbags.rosbag2 import Reader
+    from rosbags.typesys import Stores, get_typestore
+
     ts = get_typestore(Stores.ROS2_HUMBLE)
     register_costmap_types(ts)
     commands: dict[str, list[tuple[float, float, float]]] = {"/cmd_vel_nav_raw": [], "/cmd_vel_nav": [], "/cmd_vel_safe": []}

@@ -1,0 +1,63 @@
+# Formal vehicle footprint is final geometry; no second padding budget.
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      width: 4
+      height: 4
+      footprint: "[[0.28, 0.13], [0.28, -0.13], [-0.11, -0.13], [-0.11, 0.13]]"
+      footprint_padding: 0.0
+      inflation_layer:
+        inflation_radius: 0.03
+        cost_scaling_factor: 10.0
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 5.0
+      publish_frequency: 1.0
+      resolution: 0.01
+      footprint: "[[0.28, 0.13], [0.28, -0.13], [-0.11, -0.13], [-0.11, 0.13]]"
+      footprint_padding: 0.0
+      inflation_layer:
+        inflation_radius: 0.03
+
+planner_server:
+  ros__parameters:
+    GridBased:
+      downsampling_factor: 5
+      minimum_turning_radius: 0.35
+
+behavior_server:
+  ros__parameters:
+    behavior_plugins: ["wait"]
+
+controller_server:
+  ros__parameters:
+    goal_checker_plugins: ["general_goal_checker", "QrRegionGoalChecker", "GateEntryGoalChecker"]
+    general_goal_checker:
+      xy_goal_tolerance: 0.10
+      # Position-only QR acceptance: yaw remains a planning hint, not a pass condition.
+      yaw_goal_tolerance: 0.35
+    QrRegionGoalChecker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.12
+      yaw_goal_tolerance: 0.14
+      stateful: false
+    GateEntryGoalChecker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.30
+      yaw_goal_tolerance: 0.349066
+      stateful: false
+    FollowPath:
+      plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
+      desired_linear_vel: 0.50
+      regulated_linear_scaling_min_radius: 0.35
+      allow_reversing: false
+      use_rotate_to_heading: false
+
+velocity_smoother:
+  ros__parameters:
+    max_velocity: [0.52, 0.0, 1.2]
+    min_velocity: [0.0, 0.0, -1.2]
+    max_accel: [0.50, 0.0, 1.2]
+    max_decel: [-0.70, 0.0, -1.2]

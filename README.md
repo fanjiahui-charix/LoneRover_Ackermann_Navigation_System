@@ -1,15 +1,41 @@
-# LoneRover Ackermann Navigation System · ROS 2 竞赛导航系统
+# LoneRover · Ackermann Navigation System
 
-一套在真实比赛场地完成验证的 Ackermann 小车导航系统：轮式里程计与 IMU 的 EKF 融合惯导、1 cm 静态地图、N10 雷达锥桶感知、Nav2、完整任务状态机、倒车 LUT、通道 Tube/RPP，以及底盘速度控制和安全输出。稳定可以跑40s，再调一下速度和任务流程，能进30s。该仓库为我在2026地瓜机器人智慧医疗智能车创意组比赛中独自完成的核心源码。
+**RDK X5 上的 ROS 2 / Nav2 竞赛导航系统**
 
+[![ROS 2 Humble](https://img.shields.io/badge/ROS_2-Humble-22314E?logo=ros)](https://docs.ros.org/en/humble/)
+![RDK X5](https://img.shields.io/badge/Platform-RDK_X5-147D92)
+![C++17 and Python](https://img.shields.io/badge/Code-C%2B%2B17_%7C_Python-496A9C)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-4C8A63)](LICENSE)
 
-[English README](README_EN.md)
+[English](README_EN.md) · [实车演示](#demo) · [系统架构](#architecture) · [构建与运行](#build) · [调车经验](#debugging)
+
+一套在真实比赛场地完成验证的 Ackermann 小车导航系统：轮式里程计与 IMU 的 EKF 融合定位、1 cm 静态地图、N10 雷达锥桶感知、Nav2、任务状态机、倒车 LUT、通道 Tube/RPP，以及底盘速度控制和安全输出。该项目由我在 2026 年地瓜机器人智慧医疗智能车创意组比赛中独立完成。
+
+<a id="demo"></a>
+
+## 实车演示
+
+[![早期版本实车演示，1.90 倍速](docs/media/early-prototype-preview.gif)](docs/media/early-prototype-demo.mp4)
+
+**[观看完整演示 · 约 35 秒 MP4](docs/media/early-prototype-demo.mp4)**
+
+早期版本录像，按 **1.90×** 加速播放；上方为 7 秒片段，完整演示约 35 秒。[静态封面](docs/media/early-prototype-poster.jpg) · [处理脚本](tools/media/prepare_demo.py)
+
+## 配置速览
+
+| 项目 | 配置 | 入口 |
+| --- | --- | --- |
+| 运行平台 | RDK X5 · ROS 2 Humble / TROS | [依赖](docs/DEPENDENCIES.md) |
+| 静态地图 | 1 cm / 栅格 | [地图](src/hobot_navigation/hobot_nav/maps/rdk_2026_hospital_static_1cm.yaml) |
+| 定位更新 | EKF 50 Hz | [EKF 参数](src/mycar/ekf_fusion/config/ekf_with_lidar_odom.yaml) |
+| 全局规划 | Smac Hybrid-A* · 最小转弯半径 0.35 m | [Nav2 参数](src/hobot_navigation/hobot_nav/config/nav2_params.yaml) |
+| 控制与平滑 | Controller / VelocitySmoother 20 Hz | [Nav2 参数](src/hobot_navigation/hobot_nav/config/nav2_params.yaml) |
 
 仓库入口：
 
-- [工具总览](tools/README_CN.md)：Ackermann 车模、EKF、倒车 LUT、Tube/RPP 和 Native X5 虚拟车辆回放；
-- [比赛导航包](src/hobot_navigation/hobot_nav/README_CN.md)：启动、参数、地图、行为树和任务状态机；
-- [比赛入口说明](src/hobot_navigation/hobot_nav/README_COMPETITION.md)：唯一的正式比赛启动命令；
+- [工具总览](tools/README_CN.md)：标定、Ackermann 车模、EKF、倒车 LUT、Tube/RPP 和 X5 虚拟车辆回放；
+- [比赛导航包](src/hobot_navigation/hobot_nav/README_CN.md)：启动、参数、地图和行为树；
+- [比赛入口说明](src/hobot_navigation/hobot_nav/README_COMPETITION.md)：Supervisor 与比赛运行链路；
 - [通道调参文档](docs/channel_tuning/README.md)：Tube、RPP、连接段和候选部署流程。
 
 ---
@@ -78,34 +104,38 @@ competition_command_limiter
 
 地图分辨率也做过取舍。我试过 5 mm，甚至试过 1 mm。分辨率继续变细以后，costmap 的尺寸、内存和更新量明显增加，RDK X5 上的规划和调试都会变重；而车体 footprint、舵机误差、定位误差和锥桶检测误差，已经大于单纯把栅格从 1 cm 细化到 1 mm 带来的收益。最后保留 1 cm 静态地图，给规划留足障碍膨胀和车辆余量。
 
+<a id="architecture"></a>
+
 ### 系统架构与数据流
 
-```text
-STM32 / 舵机 / 编码器 / IMU
-          │ 串口协议、底盘反馈
-          ▼
-origincarpro_base ── 原始轮速、IMU、底盘静态 TF
-          │
-          ▼
-ekf_fusion ───────── 轮式里程计 + IMU → odom → base_link
-          │
-          ├── 1 cm 静态地图 → Nav2 全局/局部代价地图
-          ├── N10 雷达 → 滤波 → 锥桶聚类 → 锥桶层/禁区层
-          ├── USB 相机 → 二维码 → 方向和任务分支
-          └── USB 相机 → 立牌检测 → crop → 可选 VLM 描述
-                                      │
-                                      ▼
-                    competition_supervisor / 完整任务状态机
-                                      │
-          ├── Nav2 Behavior Tree：导航动作、重规划、恢复
-          ├── SmacPlannerHybrid：Nav2 Hybrid-A* 全局规划
-          ├── MPPI：大厅等开放区域的局部规划
-          └── Tube + RPP：窄通道的固定轨迹跟踪
-                                      │
-             VelocitySmoother → 自写限速/控制 → 安全输出 → 底盘
+```mermaid
+flowchart TB
+  HW["STM32 · Encoders · IMU · Servo"] --> Base["origincarpro_base"]
+  Base --> EKF["ekf_fusion · Wheel / IMU"]
+  Map["1 cm static map"] --> Cost["Global / Local costmap"]
+  Lidar["N10 LiDAR"] --> Filter["Filter · Cone clustering"] --> Cost
+  Camera["Camera · QR / Sign perception"] --> Task["competition_supervisor · Mission phases"]
+  EKF -->|"/odom · odom → base_link"| Nav["Nav2 BT · Navigation / Recovery"]
+  Task --> Nav
+  Cost --> Smac["Smac Hybrid-A* · Global path"] --> Nav
+  Nav --> Track["MPPI / Tube + RPP"]
+  Track --> Smooth["VelocitySmoother"] --> Limit["Speed limits · Ackermann constraints"]
+  Limit -->|"/cmd_vel_safe"| Base
+  classDef sensor fill:#e7f4f1,stroke:#36877b,color:#173f39
+  classDef plan fill:#eaf0fc,stroke:#5478bb,color:#243f70
+  classDef control fill:#fff2db,stroke:#b8893c,color:#69491b
+  class Base,EKF,Lidar,Filter sensor
+  class Task,Nav,Cost,Smac,Map plan
+  class Track,Smooth,Limit control
 ```
 
 启动后，`origincarpro_base` 发布底盘反馈和 IMU，`ekf_fusion` 完成松耦合轮速—IMU 融合，并且只发布动态的 `odom -> base_link`。地图坐标系通过已有静态地图和固定起点位姿建立；当前现场命令同时启动 BEV stack，BEV 的计算和 `map -> odom` 修正由 Supervisor 按任务阶段控制。
+
+### 地图与轨迹可视化
+
+![Channel v2 内、中、外 Tube 轨迹](docs/assets/channel_tubes_v2.png)
+
+图中使用 Channel v2 准入清单对应的内 / 中 / 外三组 Tube，包含顺、逆时针六条路径；三组路径在弯道处也保持各自的几何形状。[轨迹数据](src/hobot_navigation/hobot_nav/runtime/channel_v2/tubes/) · [生成脚本](tools/visualization/README.md)
 
 ### 二、系统特性
 
@@ -187,7 +217,7 @@ LUT 的价值在于把车上最容易发散的一段搜索提前做完。LUT 由
 
 标定不要从 EKF 开始。先让下位机只输出原始轮速和 IMU 数据，确认方向、单位、时间戳和串口帧都正常，再把标定结果写回 `origincarpro_base.yaml`。建议按下面的顺序做：
 
-1. **轮速和底盘运动比例**：让车低速前进、后退和原地转动，用已知距离和角度检查 `/odom/data_raw`，确认方向后再调整 `odom_linear_scale` 和 `odom_angular_scale`。`tools/vehicle_model/ackermann_vehicle_model.py` 提供了当前 Ackermann 车模的几何换算和转角检查函数。
+1. **轮速和底盘运动比例**：让车低速前进、后退并做左右转弯，用已知距离和角度检查 `/odom/data_raw`，确认方向后再调整 `odom_linear_scale` 和 `odom_angular_scale`。`tools/vehicle_model/ackermann_vehicle_model.py` 提供了当前 Ackermann 车模的几何换算和转角检查函数。
 2. **PWM—实际转角**：不要把 PWM 和转角当成一条直线。让舵机从左限位扫到右限位，在真实 RDK X5 车模上逐点测量前轮转角，左右两侧分别保存为 CSV，列名为 `pwm,angle_deg`。运行下面的脚本生成左右两套 PCHIP 分段系数：
 
    ```bash
@@ -232,6 +262,12 @@ LUT 的价值在于把车上最容易发散的一段搜索提前做完。LUT 由
 
 完整的输入格式、依赖和输出文件说明见 [`tools/calibration/README.md`](tools/calibration/README.md)。这些串口采集脚本按仓库中的示例 STM32 帧解析；如果更换下位机协议，需要先修改 `tools/calibration/imu_protocol.py`，不能直接假设串口数据格式相同。
 
+##### 舵机标定曲线
+
+![左转、右转测量均值与 PCHIP 曲线](docs/assets/servo_pchip_calibration.png)
+
+左转 / 右转 CSV 测量均值与 `servo_fit.c` 的 PCHIP 曲线叠加，中立点单独标为参考；两个方向分别拟合，保留实际转向几何的非线性。
+
 #### 对雷达、地图和相机的要求
 
 - N10 雷达需要稳定发布 `/scan_raw`，`scan_time` 和 `time_increment` 不能是无效值；
@@ -270,25 +306,25 @@ LUT 的价值在于把车上最容易发散的一段搜索提前做完。LUT 由
 
 ```text
 src/
-├── mycar/
-│   ├── origincarpro_base/       # STM32 串口、底盘反馈、轮速、IMU、静态 TF
-│   ├── ekf_fusion/              # 轮式里程计 + IMU 的 2D EKF
-│   ├── origincar_description/   # 车模、URDF/Xacro、RViz 离线可视化
-│   └── simple_lidar_odom/       # 独立的雷达几何里程计实验包
-├── hobot_navigation/
-│   ├── hobot_nav/               # 比赛入口、Supervisor、状态机、地图、LUT、Tube
-│   ├── lidar_perception/        # 滤波、锥桶聚类和 costmap layer
-│   ├── adaptive_speed_limiter/  # 曲率、净空和目标接近速度限制
-│   └── lidar_web_viewer/        # 雷达话题的轻量查看器
-robot_dev_config/                # X5 交叉编译和依赖配置
-tools/                           # 车模、倒车入口、Tube、EKF 和离线分析工具
-docs/                            # Tube、RPP、部署和调参记录
-findings.md                      # 工程附录（历史整理，不参与运行）
-progress.md                      # 阶段附录（历史整理，不参与运行）
-task_plan.md                     # 复现与调参计划（不参与运行）
-x5_build.sh                      # X5 构建入口
-scripts/deploy_x5.sh             # 通用部署脚本
+  hobot_navigation/
+    hobot_nav/                  # Supervisor, Nav2, maps, LUT, Tube, launch
+    adaptive_speed_limiter/     # adaptive speed-limit node and logic
+    lidar_perception/           # scan filtering, cones, costmap layers
+    lidar_web_viewer/           # browser-based lidar view
+  mycar/
+    origincarpro_base/          # serial chassis interface
+    ekf_fusion/                 # localization
+    simple_lidar_odom/          # lidar odometry
+    origincar_description/      # URDF / RViz model
+  hobot_msgs/                   # mission message definitions
+tools/                          # calibration, LUT, Tube, replay and plots
+docs/assets/                    # map and steering figures
+docs/media/                     # demo MP4, GIF and poster
+x5_build.sh                     # X5 cross-build helper
+scripts/deploy_x5.sh            # deployment helper
 ```
+
+<a id="build"></a>
 
 ### 七、构建与运行
 
@@ -304,10 +340,12 @@ scripts/deploy_x5.sh             # 通用部署脚本
 
 ```bash
 source /opt/ros/humble/setup.bash
-./x5_build.sh --up-to hobot_nav
+X5_BUILD_COMPETITION_SUPERVISOR=ON ./x5_build.sh --up-to hobot_nav
 ```
 
 主机主要负责交叉编译和静态检查，不能把主机上的 x86 环境当成车端运行环境。第一次打通时建议使用 `--up-to hobot_nav`，已有依赖产物以后再选择目标包增量构建。
+
+`X5_BUILD_COMPETITION_SUPERVISOR=ON` 同时编译任务状态机与比赛命令限制器。消息定义随源码提供，车端视觉、BEV 与显示依赖按 [比赛入口说明](src/hobot_navigation/hobot_nav/README_COMPETITION.md) 准备。状态机实现可直接查看 [competition_supervisor.cpp](src/hobot_navigation/hobot_nav/src/competition_supervisor.cpp) 和 [motion_action_arbiter.cpp](src/hobot_navigation/hobot_nav/src/motion_action_arbiter.cpp)。
 
 #### 正式比赛运行
 
@@ -322,6 +360,8 @@ export X5_DEPLOY_HOST='root@YOUR_VEHICLE_IP'
 systemctl stop lightdm
 
 export ROS_DOMAIN_ID=231
+
+CHANNEL_V2_DIR="$(ros2 pkg prefix hobot_nav)/share/hobot_nav/runtime/channel_v2"
 
 ros2 launch hobot_nav competition_runtime.launch.py \
   start_mission:=true \
@@ -344,9 +384,9 @@ ros2 launch hobot_nav competition_runtime.launch.py \
   qr_midcourse_replan_x:=1.6 \
   channel_avoidance_v2_enabled:=true \
   channel_templates_runtime_allowed:=true \
-  channel_v2_asset_directory:=/root/ros_workspace/channel_v2_active \
-  channel_v2_admission_sha256:=YOUR_CHANNEL_V2_ADMISSION_SHA256 \
-  channel_runtime_tuning_file:=/root/ros_workspace/channel_v2_active/configuration/channel_runtime_tuning.yaml \
+  channel_v2_asset_directory:="$CHANNEL_V2_DIR" \
+  channel_v2_admission_sha256:=f1b8d865214c67f7f4536806c66f5de47b5a055918a2a5f57fcfb9e251837870 \
+  channel_runtime_tuning_file:="$CHANNEL_V2_DIR/configuration/channel_runtime_tuning.yaml" \
   readiness_timeout_sec:=90 \
   capture_diagnostics_enabled:=false \
   competition_quiet_mode:=false \
@@ -354,8 +394,7 @@ ros2 launch hobot_nav competition_runtime.launch.py \
   log_level:=error
 ```
 
-这条命令加载已有的 1 cm 静态地图，不启动建图。`vlm_server_ip` 和
-`channel_v2_admission_sha256` 在公开文档中使用占位符，车端使用现场配置值。
+这条命令加载已有的 1 cm 静态地图与随安装包提供的 Channel v2 资产。`vlm_server_ip` 填写现场服务地址。
 ROS Domain 231 用于隔离不同车辆的 DDS 数据。
 
 ### 八、赛题具体怎么做
@@ -380,6 +419,8 @@ ROS Domain 231 用于隔离不同车辆的 DDS 数据。
 通道结束后，Supervisor 将控制权交回常规导航链路，使用当前 EKF 位姿重新规划回 P 点。`SmacPlannerHybrid` 负责全局路径，MPPI 负责开放区域局部跟踪，速度控制器和安全输出继续作为最后一层约束。任务完成还要结合动作结果、当前位置、停止状态和任务事件进行确认。
 
 Tube 轨迹只覆盖通道内部的通过段。车辆出通道后，Supervisor 将控制权交回普通导航链路，使用当前 EKF 位姿重新规划回 P 点，避免把固定通道轨迹延伸到出口和开放区域。
+
+<a id="debugging"></a>
 
 ### 九、导航调试经验和容易出问题的地方
 
@@ -444,20 +485,9 @@ Tube 轨迹只覆盖通道内部的通过段。车辆出通道后，Supervisor �
 
 很多问题来自车端负载、DDS、相机/雷达回调和可视化同时运行造成的实时性下降。先把数据录下来，再离线看，通常比盯着一台卡顿的 RViz 更快。
 
-### 比赛资料
+### 相关资料
 
-仓库还保留了我实际使用过的两份比赛参考资料，放在 [`docs/competition/`](docs/competition/)：
-
-- [赛项方案（DOCX）](docs/competition/21届全国大学生智能汽车竞赛地瓜机器人赛项方案-20260316.docx)
-- [比赛流程及裁判员参考手册（PDF）](docs/competition/FireShot%20Capture%20114%20-%20裁判手册%20-%20第二十一届全国大学生智能汽车竞赛地瓜机器人智慧医疗赛比赛流程及裁判员参考手册.pdf)
-
-它们用于解释任务约束、评分流程和代码里的状态设计，不参与构建和运行。
-
-仓库还保留了三份工程附录。它们用于保存背景和复现线索，不是当前运行说明，也不参与构建和启动：
-
-- [工程附录：判断与阶段记录](findings.md)
-- [工程附录：进度和路线记录](progress.md)
-- [工程附录：复现与调参计划](task_plan.md)
+[赛项与任务设计](docs/competition/README.md) · [标定工具](tools/calibration/README.md) · [工具总览](tools/README_CN.md)
 
 ### 虚实结合和离线调参
 

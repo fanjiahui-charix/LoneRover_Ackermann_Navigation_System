@@ -1,0 +1,41 @@
+<!-- Fixed-start Ackermann fallback for Humble's always-configured multi-pose navigator. -->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="3" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithPersistentValidPath">
+        <RateController hz="2.0" name="PathValidityAndPlanningAt2Hz">
+          <Fallback name="KeepValidPathOrCompute">
+            <ReactiveSequence name="KeepUnchangedValidPath">
+              <Inverter>
+                <GlobalUpdatedGoal/>
+              </Inverter>
+              <IsPathValid path="{path}"/>
+            </ReactiveSequence>
+            <ReactiveSequence>
+              <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="0.7"/>
+              <ComputePathThroughPoses goals="{goals}" path="{path}" planner_id="GridBased"/>
+            </ReactiveSequence>
+          </Fallback>
+        </RateController>
+        <FollowPath path="{path}" controller_id="FollowPath"/>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated/>
+        <RoundRobin name="LimitedAckermannRecoveries">
+          <Sequence name="ClearLocalThenRetry">
+            <ClearEntireCostmap name="ClearLocalCostmap-Recovery" service_name="local_costmap/clear_entirely_local_costmap"/>
+            <Delay delay_msec="250">
+              <AlwaysSuccess/>
+            </Delay>
+          </Sequence>
+          <Sequence name="ClearGlobalThenRetry">
+            <ClearEntireCostmap name="ClearGlobalCostmap-Recovery" service_name="global_costmap/clear_entirely_global_costmap"/>
+            <Delay delay_msec="600">
+              <AlwaysSuccess/>
+            </Delay>
+          </Sequence>
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

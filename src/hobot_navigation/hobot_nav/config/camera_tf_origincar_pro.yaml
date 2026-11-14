@@ -1,0 +1,22 @@
+# Calibrated on the competition vehicle. Source copy of
+# /root/calib/origincar_pro/camera_tf.yaml.
+static_frames_publisher:
+  ros__parameters:
+    publish_camera_tf: true
+    camera.parent_frame: base_link
+    camera.child_frame: camera_link
+    camera.x: 0.200000
+    camera.y: 0.000000
+    camera.z: 0.103571
+    camera.roll: -0.029099
+    camera.pitch: -0.063844
+    camera.yaw: 0.000000
+    publish_camera_optical_tf: true
+    camera_optical.parent_frame: camera_link
+    camera_optical.child_frame: camera_optical_frame
+    camera_optical.x: 0.0
+    camera_optical.y: 0.0
+    camera_optical.z: 0.0
+    camera_optical.roll: -1.57079632679
+    camera_optical.pitch: 0.0
+    camera_optical.yaw: -1.57079632679
