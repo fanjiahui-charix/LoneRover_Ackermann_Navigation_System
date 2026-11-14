@@ -797,7 +797,7 @@ L 202.241 247.560203
    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #596d80" x="69.552" y="58.2912" transform="rotate(-0 69.552 58.2912)">Inner / Center / Outer  ·  CW and CCW</text>
   </g>
   <g id="text_17">
-   <text style="font-size: 9.2px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #596d80" x="69.552" y="590.8608" transform="rotate(-0 69.552 590.8608)">Channel v2 admission  f1b8d865214c67f7…  |  1 cm static map</text>
+   <text style="font-size: 9.2px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #596d80" x="69.552" y="590.8608" transform="rotate(-0 69.552 590.8608)">Channel v2  |  1 cm static map</text>
   </g>
   <g id="text_18">
    <text style="font-size: 8.1px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #596d80" x="69.552" y="614.7072" transform="rotate(-0 69.552 614.7072)">Source: runtime/channel_v2/runtime_admission.csv and tubes/*.csv</text>

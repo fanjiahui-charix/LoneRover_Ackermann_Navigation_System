@@ -1,7 +1,6 @@
 # Navigation tools
 
-`tools/` contains standalone utilities for tuning and validating the public
-navigation core. They do not start a private task layer or a device driver.
+`tools/` contains offline navigation tuning, path checks, calibration and data-analysis utilities.
 
 The directories are organized by responsibility: [`vehicle_model/`](vehicle_model/README_EN.md) for the Ackermann model and virtual-vehicle replay, [`reverse_entry/`](reverse_entry/README_EN.md) for reverse-entry LUTs, [`channel_tuning/`](channel_tuning/README.md) for Tube/RPP assets, [`calibration/`](calibration/README_EN.md) for lower-controller calibration, and [`offline_analysis/`](offline_analysis/README_EN.md) for rosbag and run analysis.
 

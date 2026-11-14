@@ -15,11 +15,11 @@
 
 ## 实车演示
 
-[![早期版本实车演示，1.90 倍速](docs/media/early-prototype-preview.gif)](docs/media/early-prototype-demo.mp4)
+[![实车导航闭环演示](docs/media/preview.gif)](docs/media/demo.mp4)
 
-**[观看完整演示 · 约 35 秒 MP4](docs/media/early-prototype-demo.mp4)**
+**[观看完整闭环演示视频 (MP4)](docs/media/demo.mp4)**
 
-早期版本录像，按 **1.90×** 加速播放；上方为 7 秒片段，完整演示约 35 秒。[静态封面](docs/media/early-prototype-poster.jpg) · [处理脚本](tools/media/prepare_demo.py)
+*全流程闭环演示：P 点出发 → 扫码判向 → 查表倒车入库 → 窄通道 Tube 避障跟踪 → 返回 P 点（注：为便于网页快速预览，上方演示已做倍速压缩处理）。仓库内置从保守调试档（`safe_05`）到高速竞赛档（`race_07` ~ `race_09`）的多套参数配置，高速档位下实测完赛时间约 35–40 s。*
 
 ## 配置速览
 

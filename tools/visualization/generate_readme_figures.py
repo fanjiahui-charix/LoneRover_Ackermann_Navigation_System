@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
-import json
 import re
 from pathlib import Path
 
@@ -74,7 +73,7 @@ def read_map(path: Path) -> tuple[np.ndarray, tuple[float, ...], dict, Path]:
     return classified, extent, metadata, image_path
 
 
-def read_admitted_tubes(directory: Path) -> tuple[dict[str, np.ndarray], list[Path], dict]:
+def read_admitted_tubes(directory: Path) -> tuple[dict[str, np.ndarray], dict]:
     admission_path = directory / "runtime_admission.csv"
     raw = admission_path.read_bytes()
     admission_sha256 = hashlib.sha256(raw).hexdigest()
@@ -82,7 +81,7 @@ def read_admitted_tubes(directory: Path) -> tuple[dict[str, np.ndarray], list[Pa
         raise ValueError("Channel v2 admission differs from the published manifest identity")
     with admission_path.open(encoding="utf-8", newline="") as stream:
         admission_rows = list(csv.DictReader(stream))
-    paths, sources = {}, [admission_path]
+    paths = {}
     for entry in admission_rows:
         if entry["kind"] != "tube":
             continue
@@ -98,17 +97,13 @@ def read_admitted_tubes(directory: Path) -> tuple[dict[str, np.ndarray], list[Pa
         if len(rows) < 2 or not np.all(np.isfinite(xy)):
             raise ValueError(f"invalid Tube coordinates: {path}")
         paths[f"tube_{lane}_{direction}"] = xy
-        sources.append(path)
     if set(paths) != {f"tube_{lane}_{direction}" for lane in LANES for direction in ("cw", "ccw")}:
         raise ValueError("Channel v2 admission must provide exactly six Tube paths")
     map_rows = [row for row in admission_rows if row["kind"] == "map"]
     if len(map_rows) != 1:
         raise ValueError("Channel v2 admission must identify one static map")
-    return paths, sources, {
-        "admission_sha256": admission_sha256,
+    return paths, {
         "static_map_sha256": map_rows[0]["sha256"],
-        "tube_paths": len(paths),
-        "points_per_path": {name: len(xy) for name, xy in sorted(paths.items())},
     }
 
 
@@ -130,11 +125,11 @@ def draw_paths(axis, paths: dict[str, np.ndarray]) -> None:
                       alpha=0.96, zorder=3)
 
 
-def make_tube_figure(root: Path, output: Path, asset_directory: Path) -> tuple[list[Path], dict]:
+def make_tube_figure(root: Path, output: Path, asset_directory: Path) -> None:
     nav = root / "src/hobot_navigation/hobot_nav"
     map_yaml = nav / "maps/rdk_2026_hospital_static_1cm.yaml"
     pixels, extent, metadata, map_image = read_map(map_yaml)
-    paths, tube_sources, metrics = read_admitted_tubes(asset_directory)
+    paths, metrics = read_admitted_tubes(asset_directory)
     if hashlib.sha256(map_image.read_bytes()).hexdigest() != metrics["static_map_sha256"]:
         raise ValueError("the plotted map differs from the Channel v2 admission map")
     figure = plt.figure(figsize=(8.4, 9.2))
@@ -154,15 +149,12 @@ def make_tube_figure(root: Path, output: Path, asset_directory: Path) -> tuple[l
     figure.legend(handles=legend, loc="lower left", bbox_to_anchor=(0.10, 0.145),
                   ncol=5, frameon=False, fontsize=9, columnspacing=1.2, handlelength=2.2)
     figure.text(0.115, 0.108,
-                 f"Channel v2 admission  {metrics['admission_sha256'][:16]}…  |  "
-                 f"{metadata['resolution'] * 100:g} cm static map",
+                 f"Channel v2  |  {metadata['resolution'] * 100:g} cm static map",
                  fontsize=9.2, color=MUTED)
     figure.text(0.115, 0.072,
                  "Source: runtime/channel_v2/runtime_admission.csv and tubes/*.csv",
                  fontsize=8.1, color=MUTED)
     save_figure(figure, output, "channel_tubes_v2")
-    metrics["map_resolution_m"] = metadata["resolution"]
-    return [map_yaml, map_image, *tube_sources], metrics
 
 
 def read_servo_segments(source: str, side: str) -> np.ndarray:
@@ -186,11 +178,10 @@ def evaluate_segments(segments: np.ndarray, pwm: np.ndarray) -> np.ndarray:
                       chosen[:, 4]) * delta + chosen[:, 5])
 
 
-def make_servo_figure(root: Path, output: Path) -> tuple[list[Path], dict]:
+def make_servo_figure(root: Path, output: Path) -> None:
     calibration = root / "tools/calibration"
     c_source = calibration / "servo_fit.c"
     source = c_source.read_text(encoding="utf-8")
-    source_paths = [c_source]
     figure = plt.figure(figsize=(14, 7.4))
     figure.text(0.065, 0.94, "MEASURED STEERING, ASYMMETRIC CALIBRATION",
                  fontsize=19, weight="bold")
@@ -199,10 +190,8 @@ def make_servo_figure(root: Path, output: Path) -> tuple[list[Path], dict]:
                  fontsize=11, color=MUTED)
     left = figure.add_axes([0.075, 0.27, 0.48, 0.54])
     right = figure.add_axes([0.66, 0.27, 0.28, 0.54])
-    metrics = {}
     for side, color in SIDES.items():
         csv_path = calibration / f"data/servo_{side}_pwm_angle.csv"
-        source_paths.append(csv_path)
         with csv_path.open(encoding="utf-8-sig", newline="") as stream:
             rows = list(csv.DictReader(stream))
         points = np.asarray([(float(r["pwm"]), float(r["angle_deg"]),
@@ -228,13 +217,6 @@ def make_servo_figure(root: Path, output: Path) -> tuple[list[Path], dict]:
         right.annotate(f"{abs(farthest[1]):g}°", (abs(farthest[0] - 1500), abs(farthest[1])),
                        xytext=(-4, 10), textcoords="offset points",
                        ha="right", color=color, fontsize=11, weight="bold")
-        metrics[side] = {
-            "measured_pwm_points": len(measured),
-            "reported_repeats": int(measured[:, 2].sum()),
-            "sample_count_range": [int(measured[:, 2].min()), int(measured[:, 2].max())],
-            "maximum_abs_measured_angle_deg": float(np.max(np.abs(measured[:, 1]))),
-            "maximum_curve_residual_at_measured_means_deg": residual,
-        }
     for axis in (left, right):
         axis.grid(color="#e4e9ee", linewidth=0.8, zorder=0)
         axis.spines[["top", "right"]].set_visible(False)
@@ -276,7 +258,6 @@ def make_servo_figure(root: Path, output: Path) -> tuple[list[Path], dict]:
                  "tools/calibration/servo_fit.c (PWM → angle tables).",
                  fontsize=8.5, color=MUTED)
     save_figure(figure, output, "servo_pchip_calibration")
-    return source_paths, metrics
 
 
 def main() -> int:
@@ -291,25 +272,11 @@ def main() -> int:
     configure_style()
     asset_directory = (args.tube_asset_dir.resolve() if args.tube_asset_dir else
                        root / "src/hobot_navigation/hobot_nav/runtime/channel_v2")
-    tube_sources, tube_metrics = make_tube_figure(root, output, asset_directory)
-    servo_sources, servo_metrics = make_servo_figure(root, output)
-    sources = {
-        (path.relative_to(root).as_posix() if path.is_relative_to(root) else str(path)):
-        hashlib.sha256(path.read_bytes()).hexdigest()
-        for path in sorted(set(tube_sources + servo_sources))
-    }
-    manifest = {
-        "generator": Path(__file__).resolve().relative_to(root).as_posix(),
-        "interpretation": "Manifest-bound Channel v2 Tube geometry and vehicle-profile steering calibration.",
-        "source_sha256": sources,
-        "channel_tubes_v2": tube_metrics,
-        "servo_pchip_calibration": servo_metrics,
-    }
-    (output / "readme_figure_sources.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8",
-    )
-    print(json.dumps({"output_dir": str(output), "channel_tubes_v2": tube_metrics,
-                      "servo": servo_metrics}, indent=2))
+    make_tube_figure(root, output, asset_directory)
+    make_servo_figure(root, output)
+    for stem in ("channel_tubes_v2", "servo_pchip_calibration"):
+        for extension in ("png", "svg"):
+            print(output / f"{stem}.{extension}")
     return 0
 
 
