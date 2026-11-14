@@ -17,13 +17,18 @@
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>hbmem_wechatcode_msgs</depend>
+  <depend>ollama_msgs</depend>
+  <depend>rclcpp_action</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>lifecycle_msgs</depend>
 
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>action_msgs</exec_depend>
-  <exec_depend>lifecycle_msgs</exec_depend>
   <exec_depend>nav2_common</exec_depend>
   <exec_depend>nav2_controller</exec_depend>
   <exec_depend>nav2_costmap_2d</exec_depend>
@@ -47,6 +52,7 @@
   <exec_depend>rviz2</exec_depend>
 
   <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>python3-numpy</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
 
   <export>

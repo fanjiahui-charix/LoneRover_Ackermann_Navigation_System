@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-14T15:24:00.231771+00:00",
+  "stage": "early recording",
+  "source": {
+    "filename": "07ed818a0b7dcf64463b76ff97776233.mp4",
+    "sha256": "1e75a83f1aa917ceca4cc9b127facfd75fd0a6707255b45d31cf01c22c31f06d",
+    "bytes": 8968816,
+    "container_duration_seconds": 66.25,
+    "decoded_video_frames": 1986,
+    "video_duration_seconds": 66.2,
+    "width": 1280,
+    "height": 720,
+    "reported_fps": 30.0,
+    "codec": "h264",
+    "has_audio": true,
+    "decode_succeeded": true,
+    "preserved_unmodified": true,
+    "stored_in_repository": false
+  },
+  "edit": {
+    "playback_speed_factor": 1.9,
+    "persistent_label": null,
+    "timeline": "Entire source video timeline in original order; accelerated, without cropping or scene cuts.",
+    "audio": "Omitted for the silent showcase and GIF; preserved in the external original.",
+    "frame_rate_conversion": "30 fps output; temporal frames are dropped by the fps filter during acceleration."
+  },
+  "outputs": {
+    "video": {
+      "filename": "early-prototype-demo.mp4",
+      "bytes": 6937322,
+      "sha256": "3aef96597e94bb9ac942c61e21a307d8f9a030ba071bc11769c7b2bc683eec04",
+      "container_duration_seconds": 34.83,
+      "decoded_video_frames": 1045,
+      "video_duration_seconds": 34.833333,
+      "width": 1280,
+      "height": 720,
+      "reported_fps": 30.0,
+      "codec": "h264",
+      "has_audio": false,
+      "decode_succeeded": true
+    },
+    "gif": {
+      "filename": "early-prototype-preview.gif",
+      "bytes": 3872524,
+      "sha256": "e0ccf3b66aa64297158803f97fa41fc49ec346f4e0a352d26845af5f42cfeba2",
+      "container_duration_seconds": 7.0,
+      "decoded_video_frames": 56,
+      "video_duration_seconds": 7.0,
+      "width": 544,
+      "height": 306,
+      "reported_fps": 8.33,
+      "codec": "gif",
+      "has_audio": false,
+      "decode_succeeded": true,
+      "showcase_start_seconds": 20.0,
+      "source_start_seconds": 38.0,
+      "source_span_seconds": 13.299999999999999,
+      "requested_fps": 8,
+      "loop": "infinite"
+    },
+    "poster": {
+      "filename": "early-prototype-poster.jpg",
+      "bytes": 91391,
+      "sha256": "8aa6cf750fa74ac028d69f561f8301eef6f318d07bbb0833d31e27d32ef2c8cc",
+      "source_time_seconds_approx": 45.0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "reproduction": {
+    "script": "tools/media/prepare_demo.py",
+    "command": "python tools/media/prepare_demo.py --source /path/to/07ed818a0b7dcf64463b76ff97776233.mp4",
+    "ffmpeg": "ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+    "video_filter": "setpts=(PTS-STARTPTS)/1.9,fps=30",
+    "gif_filter": "fps=8,scale=544:-1:flags=lanczos,split[frames][colors];[colors]palettegen=max_colors=96:stats_mode=diff[palette];[frames][palette]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle",
+    "video_encoding": {
+      "encoder": "libx264",
+      "preset": "slow",
+      "crf": 24,
+      "pixel_format": "yuv420p",
+      "faststart": true
+    }
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "contract": {
+    "dense_pose_step_m": 0.005,
+    "design_rmin_m": 0.4,
+    "footprint_boundary_step_m": 0.005,
+    "footprint_front_m": 0.28,
+    "footprint_half_width_m": 0.13,
+    "footprint_interior_step_m": 0.01,
+    "footprint_padding_m": 0.0,
+    "footprint_rear_m": 0.11,
+    "side_corresponding_clearance_target_m": [
+      0.02,
+      0.03
+    ]
+  },
+  "exits": {
+    "gate_exit_ccw_to_return_handoff": {
+      "dense_pose_samples": 366,
+      "hard_violation_count": 0,
+      "minimum_map_clearance_m": 0.13,
+      "rmin_m": 0.4
+    },
+    "gate_exit_cw_to_return_handoff": {
+      "dense_pose_samples": 366,
+      "hard_violation_count": 0,
+      "minimum_map_clearance_m": 0.13,
+      "rmin_m": 0.4
+    }
+  },
+  "offset": {
+    "bottom_long_straight_m": 0.07,
+    "c2_ramp_length_m": 0.58,
+    "corner_min_m": 0.0,
+    "max_m": 0.07,
+    "min_m": 0.0,
+    "stable_plateau_length_m": 1.417507,
+    "top_long_straight_m": 0.055
+  },
+  "runtime_load_allowed": true,
+  "sha256": {
+    "config/channel_branches/gate_exit_ccw_to_return_handoff.csv": "673bea88babdcc9d2c75a9039871c40bf4a5a0c801e241238092818972fc5b07",
+    "config/channel_branches/gate_exit_cw_to_return_handoff.csv": "ac5121dc726a02354d93291b0891cd057d89a6b9383d2fa4ba42be440b5a7b27",
+    "config/channel_transitions/transition_bottom_D_minus0.070_L_0.52.csv": "ad92dac62feb287cca843bf1858cef80cb9cbf6c2254327573f7ea4b8d7edaaa",
+    "config/channel_transitions/transition_bottom_D_plus0.070_L_0.52.csv": "12fb78903e6dc74f7b4cee134e6a74a1360037e0952cd9af85cf48fae0e3c50a",
+    "config/channel_transitions/transition_top_D_minus0.055_L_0.52.csv": "1df3c681e660f467cc9429f0e67326972efb3632621f7e28ae6c26cffa275dca",
+    "config/channel_transitions/transition_top_D_plus0.055_L_0.52.csv": "2b72abee8bcdcd6538d6755f3015a202e903c288d1c19ac6a5650bb4a5bd25ac",
+    "config/channel_tubes/tube_center_ccw.csv": "ed6c02b5ad566e211daa181f3c9090fa44fff836ac8ef101c5c0dc04ea46d083",
+    "config/channel_tubes/tube_center_cw.csv": "e924686cb891a7bff088c6448dd17a7820e85b8c80efe7d911c7bb1515207678",
+    "config/channel_tubes/tube_inner_ccw.csv": "e834a53d496a77cfd8359e29a3c1d1de19a93dfd1e4394f7e829f518443b0bd9",
+    "config/channel_tubes/tube_inner_cw.csv": "44947c50588b10f6738aef667bd13109c4bbdf4ebfec742f72a17e914260d763",
+    "config/channel_tubes/tube_outer_ccw.csv": "3e20fb0f7bb3180adb7ebfa055f4064c01a99b20d42d421311d77a09d57cf611",
+    "config/channel_tubes/tube_outer_cw.csv": "82736247283ce01eb72f2ecee884f304422dbfcf47cd4efdf91c8491a8858d4e"
+  },
+  "transitions": {
+    "bottom": {
+      "D_m": 0.07,
+      "L_m": 0.52,
+      "corresponding_boundary_min_clearance_m": 0.021709,
+      "hard_violation_count": 0,
+      "minimum_map_clearance_m": 0.03,
+      "placements": 8,
+      "rmin_m": 0.681231
+    },
+    "top": {
+      "D_m": 0.055,
+      "L_m": 0.52,
+      "corresponding_boundary_min_clearance_m": 0.023988,
+      "hard_violation_count": 0,
+      "minimum_map_clearance_m": 0.03,
+      "placements": 8,
+      "rmin_m": 0.861512
+    }
+  },
+  "tubes": {
+    "tube_center_ccw": {
+      "dense_pose_samples": 1731,
+      "hard_violation_count": 0,
+      "minimum_map_clearance_m": 0.05,
+      "rmin_m": 0.4
+    },
+    "tube_center_cw": {
+      "dense_pose_samples": 1731,
+      "hard_violation_count": 0,
+      "minimum_map_clearance_m": 0.05,
+      "rmin_m": 0.4
+    },
+    "tube_inner_ccw": {
+      "corresponding_boundary_min_clearance_m": 0.027081,
+      "dense_pose_samples": 1900,
+      "hard_violation_count": 0,
+      "minimum_map_clearance_m": 0.03,
+      "rmin_m": 0.4
+    },
+    "tube_inner_cw": {
+      "corresponding_boundary_min_clearance_m": 0.027071,
+      "dense_pose_samples": 1900,
+      "hard_violation_count": 0,
+      "minimum_map_clearance_m": 0.03,
+      "rmin_m": 0.4
+    },
+    "tube_outer_ccw": {
+      "corresponding_boundary_min_clearance_m": 0.027081,
+      "dense_pose_samples": 1900,
+      "hard_violation_count": 0,
+      "minimum_map_clearance_m": 0.03,
+      "rmin_m": 0.4
+    },
+    "tube_outer_cw": {
+      "corresponding_boundary_min_clearance_m": 0.027071,
+      "dense_pose_samples": 1900,
+      "hard_violation_count": 0,
+      "minimum_map_clearance_m": 0.03,
+      "rmin_m": 0.4
+    }
+  }
+}

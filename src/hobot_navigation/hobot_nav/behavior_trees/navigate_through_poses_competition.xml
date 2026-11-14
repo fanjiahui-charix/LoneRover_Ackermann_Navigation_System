@@ -1,0 +1,33 @@
+<!-- Narrow-course Ackermann multi-pose navigation for the 2026 hospital mission. -->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="3" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithPersistentValidPath">
+        <RateController hz="1.0" name="PathValidityAndPlanningAt1Hz">
+          <ReactiveSequence name="ContinuousReverseEscapeReplan">
+            <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="0.04"/>
+            <ComputePathThroughPoses goals="{goals}" path="{path}" planner_id="GridReverseEscape"/>
+          </ReactiveSequence>
+        </RateController>
+        <FollowPath path="{path}" controller_id="FollowPathReverse"/>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated/>
+        <RoundRobin name="LimitedAckermannRecoveries">
+          <Sequence name="ClearLocalThenRetry">
+            <ClearEntireCostmap name="ClearLocalCostmap-Recovery" service_name="local_costmap/clear_entirely_local_costmap"/>
+            <Delay delay_msec="250">
+              <AlwaysSuccess/>
+            </Delay>
+          </Sequence>
+          <Sequence name="ClearGlobalThenRetry">
+            <ClearEntireCostmap name="ClearGlobalCostmap-Recovery" service_name="global_costmap/clear_entirely_global_costmap"/>
+            <Delay delay_msec="600">
+              <AlwaysSuccess/>
+            </Delay>
+          </Sequence>
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

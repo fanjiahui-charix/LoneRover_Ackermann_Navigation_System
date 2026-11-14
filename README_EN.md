@@ -1,14 +1,37 @@
-# LoneRover
+# LoneRover · Ackermann Navigation System
 
-**LoneRover Ackermann Navigation System** · ROS 2 competition navigation system
+**ROS 2 / Nav2 competition navigation on RDK X5**
 
-A field-tested Ackermann navigation system for a real competition vehicle. The
-stack combines wheel odometry and IMU EKF localization, a 1 cm static map, N10
-LiDAR cone perception, a stage-gated BEV stack, Nav2, a complete mission
-Supervisor, reverse-entry LUTs, Tube/RPP channel traversal, and chassis velocity
-control with safety output.
+[![ROS 2 Humble](https://img.shields.io/badge/ROS_2-Humble-22314E?logo=ros)](https://docs.ros.org/en/humble/)
+![RDK X5](https://img.shields.io/badge/Platform-RDK_X5-147D92)
+![C++17 and Python](https://img.shields.io/badge/Code-C%2B%2B17_%7C_Python-496A9C)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-4C8A63)](LICENSE)
 
-[中文 README](README.md)
+[中文](README.md) · [Demo](#demo) · [Architecture](#architecture) · [Build and run](#build) · [Debugging notes](#debugging)
+
+An Ackermann navigation system developed and tested on a physical competition vehicle. The stack combines wheel/IMU EKF localization, a 1 cm static map, N10 LiDAR cone perception, Nav2, a mission state machine, reverse-entry LUTs, Tube/RPP tracking, and chassis command limiting. I developed this project independently for the 2026 D-Robotics Smart Medical Vehicle competition.
+
+<a id="demo"></a>
+
+## Vehicle demo
+
+[![Early prototype, 1.90x playback](docs/media/early-prototype-preview.gif)](docs/media/early-prototype-demo.mp4)
+
+**[Watch the full demo · about 35 seconds, MP4](docs/media/early-prototype-demo.mp4)**
+
+Early prototype recording at **1.90×** playback. The GIF is a 7-second excerpt; the full accelerated demo lasts about 35 seconds. [Poster](docs/media/early-prototype-poster.jpg) · [Media script](tools/media/prepare_demo.py)
+
+## Configuration at a glance
+
+| Component | Configuration | Source |
+| --- | --- | --- |
+| Platform | RDK X5 · ROS 2 Humble / TROS | [Dependencies](docs/DEPENDENCIES.md) |
+| Static map | 1 cm per cell | [Map](src/hobot_navigation/hobot_nav/maps/rdk_2026_hospital_static_1cm.yaml) |
+| Localization | EKF at 50 Hz | [EKF parameters](src/mycar/ekf_fusion/config/ekf_with_lidar_odom.yaml) |
+| Global planning | Smac Hybrid-A* · 0.35 m minimum turning radius | [Nav2 parameters](src/hobot_navigation/hobot_nav/config/nav2_params.yaml) |
+| Control / smoothing | Controller / VelocitySmoother at 20 Hz | [Nav2 parameters](src/hobot_navigation/hobot_nav/config/nav2_params.yaml) |
+
+Start here: [Tools](tools/README.md) · [Navigation package](src/hobot_navigation/hobot_nav/README.md) · [Competition entry](src/hobot_navigation/hobot_nav/README_COMPETITION_EN.md) · [Channel tuning](docs/channel_tuning/README.md)
 
 ---
 
@@ -130,32 +153,30 @@ and cone-detection error were already larger than the benefit of a 1 mm grid.
 The final runtime map stays at 1 cm, with the remaining margin handled by
 footprint and obstacle inflation.
 
+<a id="architecture"></a>
+
 ### System architecture and data flow
 
-~~~text
-STM32 / steering servo / encoders / IMU
-          | serial protocol and chassis feedback
-          v
-origincarpro_base -- raw wheel odometry, IMU, static chassis TF
-          |
-          v
-ekf_fusion -------- wheel odometry + IMU -> odom -> base_link
-          |
-          +-- 1 cm static map -> Nav2 global/local costmaps
-          +-- N10 LiDAR -> filtering -> cone clustering -> Cone/Keepout layers
-          +-- USB camera -> QR result -> direction and mission branch
-          +-- USB camera -> sign detection -> crop -> optional VLM description
-                                      |
-                                      v
-                    competition_supervisor / mission state machine
-                                      |
-          +-- Nav2 Behavior Tree: navigation actions, replanning, recovery
-          +-- SmacPlannerHybrid: Nav2 Hybrid-A* global planning
-          +-- MPPI: local planning in open areas
-          +-- Tube + RPP: fixed-path channel tracking
-                                      |
-             VelocitySmoother -> custom limiter -> safe output -> chassis
-~~~
+```mermaid
+flowchart TB
+  HW["STM32 · Encoders · IMU · Servo"] --> Base["origincarpro_base"]
+  Base --> EKF["ekf_fusion · Wheel / IMU"]
+  Map["1 cm static map"] --> Cost["Global / Local costmap"]
+  Lidar["N10 LiDAR"] --> Filter["Filter · Cone clustering"] --> Cost
+  Camera["Camera · QR / Sign perception"] --> Task["competition_supervisor · Mission phases"]
+  EKF -->|"/odom · odom → base_link"| Nav["Nav2 BT · Navigation / Recovery"]
+  Task --> Nav
+  Cost --> Smac["Smac Hybrid-A* · Global path"] --> Nav
+  Nav --> Track["MPPI / Tube + RPP"]
+  Track --> Smooth["VelocitySmoother"] --> Limit["Speed limits · Ackermann constraints"]
+  Limit -->|"/cmd_vel_safe"| Base
+  classDef sensor fill:#e7f4f1,stroke:#36877b,color:#173f39
+  classDef plan fill:#eaf0fc,stroke:#5478bb,color:#243f70
+  classDef control fill:#fff2db,stroke:#b8893c,color:#69491b
+  class Base,EKF,Lidar,Filter sensor
+  class Task,Nav,Cost,Smac,Map plan
+  class Track,Smooth,Limit control
+```
 
 After startup, origincarpro_base publishes chassis feedback and IMU data.
 ekf_fusion performs loosely coupled wheel–IMU fusion and is the only dynamic
@@ -163,6 +184,12 @@ publisher of odom -> base_link. The map-side relationship is established by
 the existing static map and the fixed-start pose. The current field command also
 starts the BEV stack; the Supervisor gates BEV computation and map-to-odom
 correction by mission stage.
+
+### Map and trajectory visualization
+
+![Channel v2 inner, center and outer Tube paths](docs/assets/channel_tubes_v2.png)
+
+The plot uses the manifest-bound Channel v2 inner / center / outer Tube paths in both directions. The three lane geometries remain distinct around the corners. [Path data](src/hobot_navigation/hobot_nav/runtime/channel_v2/tubes/) · [Plotting script](tools/visualization/README.md)
 
 ### 2. System features
 
@@ -386,6 +413,12 @@ The complete input format, dependencies, and output files are documented in
 collectors follow the example STM32 frame in this repository; a different
 lower-controller protocol requires updating `tools/calibration/imu_protocol.py`.
 
+##### Steering calibration curves
+
+![Measured steering angles and PCHIP curves](docs/assets/servo_pchip_calibration.png)
+
+Measured left/right CSV means are overlaid with the frozen PCHIP curves in `servo_fit.c`; the neutral reference is marked separately. Separate fits preserve nonlinear steering geometry.
+
 #### LiDAR, map, and camera requirements
 
 - N10 must publish a valid /scan_raw with usable scan_time and
@@ -429,31 +462,27 @@ starting the mission.
 
 ### 6. Repository layout
 
-~~~text
+```text
 src/
-├── mycar/
-│   ├── origincarpro_base/       # STM32 serial, chassis feedback, wheel/IMU
-│   ├── ekf_fusion/              # wheel + IMU 2D EKF
-│   ├── origincar_description/   # URDF/Xacro and RViz vehicle model
-│   └── simple_lidar_odom/       # standalone LiDAR geometry odometry experiment
-├── hobot_navigation/
-│   ├── hobot_nav/               # competition entry, Supervisor, map, LUT, Tube
-│   ├── lidar_perception/        # filtering, cone clustering, costmap layers
-│   ├── adaptive_speed_limiter/  # curvature, clearance, and goal-approach limits
-│   └── lidar_web_viewer/        # lightweight LiDAR topic viewer
-robot_dev_config/                # X5 cross-compilation and dependency config
-tools/                           # vehicle model, reverse entry, Tube, EKF, and analysis tools
-docs/                            # Tube, RPP, deployment, and tuning notes
-findings.md                      # supplemental historical notes; not runtime
-progress.md                      # supplemental phase notes; not runtime
-task_plan.md                     # reproduction and tuning plan; not runtime
-x5_build.sh                      # X5 build entry
-scripts/deploy_x5.sh             # generic deployment helper
-~~~
+  hobot_navigation/
+    hobot_nav/                  # Supervisor, Nav2, maps, LUT, Tube, launch
+    adaptive_speed_limiter/     # adaptive speed-limit node and logic
+    lidar_perception/           # scan filtering, cones, costmap layers
+    lidar_web_viewer/           # browser-based lidar view
+  mycar/
+    origincarpro_base/          # serial chassis interface
+    ekf_fusion/                 # localization
+    simple_lidar_odom/          # lidar odometry
+    origincar_description/      # URDF / RViz model
+  hobot_msgs/                   # mission message definitions
+tools/                          # calibration, LUT, Tube, replay and plots
+docs/assets/                    # map and steering figures
+docs/media/                     # demo MP4, GIF and poster
+x5_build.sh                     # X5 cross-build helper
+scripts/deploy_x5.sh            # deployment helper
+```
 
-The most useful directory entry points are [tools/README.md](tools/README.md),
-[hobot_navigation/README_EN.md](src/hobot_navigation/README_EN.md), and
-[hobot_nav/README_COMPETITION_EN.md](src/hobot_navigation/hobot_nav/README_COMPETITION_EN.md).
+<a id="build"></a>
 
 ### 7. Build and run
 
@@ -470,12 +499,14 @@ aarch64. X5 cross-compilation expects a sysroot next to the workspace:
 
 ~~~bash
 source /opt/ros/humble/setup.bash
-./x5_build.sh --up-to hobot_nav
+X5_BUILD_COMPETITION_SUPERVISOR=ON ./x5_build.sh --up-to hobot_nav
 ~~~
 
 The host is mainly used for cross-compilation and static checks. Do not treat
 the host's x86 environment as the vehicle runtime. Start with
 --up-to hobot_nav, then incrementally build selected targets.
+
+`X5_BUILD_COMPETITION_SUPERVISOR=ON` builds the mission coordinator and competition command limiter. Message definitions are included; prepare the vehicle vision, BEV and display dependencies listed in the [competition entry](src/hobot_navigation/hobot_nav/README_COMPETITION_EN.md). See [competition_supervisor.cpp](src/hobot_navigation/hobot_nav/src/competition_supervisor.cpp) and [motion_action_arbiter.cpp](src/hobot_navigation/hobot_nav/src/motion_action_arbiter.cpp) for the implementation.
 
 #### Official competition run
 
@@ -491,6 +522,8 @@ devices, P pose, and ROS domain:
 systemctl stop lightdm
 
 export ROS_DOMAIN_ID=231
+
+CHANNEL_V2_DIR="$(ros2 pkg prefix hobot_nav)/share/hobot_nav/runtime/channel_v2"
 
 ros2 launch hobot_nav competition_runtime.launch.py \
   start_mission:=true \
@@ -513,9 +546,9 @@ ros2 launch hobot_nav competition_runtime.launch.py \
   qr_midcourse_replan_x:=1.6 \
   channel_avoidance_v2_enabled:=true \
   channel_templates_runtime_allowed:=true \
-  channel_v2_asset_directory:=/root/ros_workspace/channel_v2_active \
-  channel_v2_admission_sha256:=YOUR_CHANNEL_V2_ADMISSION_SHA256 \
-  channel_runtime_tuning_file:=/root/ros_workspace/channel_v2_active/configuration/channel_runtime_tuning.yaml \
+  channel_v2_asset_directory:="$CHANNEL_V2_DIR" \
+  channel_v2_admission_sha256:=f1b8d865214c67f7f4536806c66f5de47b5a055918a2a5f57fcfb9e251837870 \
+  channel_runtime_tuning_file:="$CHANNEL_V2_DIR/configuration/channel_runtime_tuning.yaml" \
   readiness_timeout_sec:=90 \
   capture_diagnostics_enabled:=false \
   competition_quiet_mode:=false \
@@ -523,9 +556,8 @@ ros2 launch hobot_nav competition_runtime.launch.py \
   log_level:=error
 ~~~
 
-The command loads the existing 1 cm static map; it does not start mapping.
-The public README uses placeholders for the VLM address and channel admission
-digest. ROS Domain 231 isolates the vehicle DDS graph.
+The command loads the existing 1 cm static map and the bundled Channel v2 assets.
+Set `vlm_server_ip` to the field service address. ROS Domain 231 isolates the vehicle DDS graph.
 
 ### 8. How the three tasks were solved
 
@@ -572,6 +604,8 @@ remain the final constraints.
 Tube assets cover only the channel traversal segment. After the exit,
 Supervisor hands control back to ordinary navigation, which uses the current
 EKF pose and SmacPlannerHybrid to plan the return to P.
+
+<a id="debugging"></a>
 
 ### 9. Navigation debugging notes
 
@@ -661,24 +695,9 @@ Vehicle load, DDS, camera/LiDAR callbacks, and visualization can combine into a
 real-time problem. Recording first and inspecting offline is often faster than
 debugging a lagging RViz session.
 
-### Competition references
+### Related material
 
-The repository retains the two competition references used during the project
-under [docs/competition/](docs/competition/):
-
-- [Competition plan (DOCX)](docs/competition/21届全国大学生智能汽车竞赛地瓜机器人赛项方案-20260316.docx)
-- [Judge handbook (PDF)](docs/competition/FireShot%20Capture%20114%20-%20裁判手册%20-%20第二十一届全国大学生智能汽车竞赛地瓜机器人智慧医疗赛比赛流程及裁判员参考手册.pdf)
-
-They explain task constraints and scoring context; they are not build or runtime
-dependencies.
-
-Three supplemental engineering files are retained for background and
-reproduction clues. They are not the current runtime specification and are not
-required to build or start the competition system:
-
-- [Supplemental engineering notes](findings.md)
-- [Supplemental phase notes](progress.md)
-- [Reproduction and tuning plan](task_plan.md)
+[Competition and mission design](docs/competition/README_EN.md) · [Calibration](tools/calibration/README_EN.md) · [Tools](tools/README.md)
 
 ### Virtual-real integration and offline tuning
 

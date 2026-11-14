@@ -38,3 +38,8 @@ logs/**/bag/metadata.yaml
 /codex_tube_offline_bundle_*/
 /tools/**/__pycache__/
 *.baiduyun.uploading.cfg
+
+# local agent planning notes (keep these outside the public source tree)
+task_plan.md
+findings.md
+progress.md

@@ -1,8 +1,7 @@
 # Waypoints
 
-This directory contains a small generic waypoint example for testing Nav2 on
-the checked-in static map. It does not contain the private competition task
-route or any sensor-driven mission logic.
+This directory contains a generic Nav2 waypoint example, fixed-start poses in
+`fixed_start_points.yaml`, and the competition/demo point configurations.
 
 `example_waypoints.yaml` uses the format consumed by `waypoint_audit.py` and
 `waypoint_recorder.py`. Replace the coordinates with poses measured in your own

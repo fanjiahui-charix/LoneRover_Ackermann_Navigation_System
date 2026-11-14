@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[4]
-sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools/offline_analysis"))
 
 from evaluate_native_run import point_to_footprint_distance  # noqa: E402
 

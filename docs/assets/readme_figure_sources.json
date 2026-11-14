@@ -1,0 +1,54 @@
+{
+  "channel_tubes_v2": {
+    "admission_sha256": "f1b8d865214c67f7f4536806c66f5de47b5a055918a2a5f57fcfb9e251837870",
+    "map_resolution_m": 0.01,
+    "points_per_path": {
+      "tube_center_ccw": 865,
+      "tube_center_cw": 865,
+      "tube_inner_ccw": 865,
+      "tube_inner_cw": 865,
+      "tube_outer_ccw": 865,
+      "tube_outer_cw": 865
+    },
+    "static_map_sha256": "b67e83beb688fc627836da2df7a105a34ab6e431c50c8b7f406671f378ba6482",
+    "tube_paths": 6
+  },
+  "generator": "tools/visualization/generate_readme_figures.py",
+  "interpretation": "Manifest-bound Channel v2 Tube geometry and vehicle-profile steering calibration.",
+  "servo_pchip_calibration": {
+    "left": {
+      "maximum_abs_measured_angle_deg": 42.0,
+      "maximum_curve_residual_at_measured_means_deg": 0.00548160913064244,
+      "measured_pwm_points": 7,
+      "reported_repeats": 32,
+      "sample_count_range": [
+        4,
+        5
+      ]
+    },
+    "right": {
+      "maximum_abs_measured_angle_deg": 29.4,
+      "maximum_curve_residual_at_measured_means_deg": 0.002079162432792714,
+      "measured_pwm_points": 7,
+      "reported_repeats": 34,
+      "sample_count_range": [
+        4,
+        6
+      ]
+    }
+  },
+  "source_sha256": {
+    "src/hobot_navigation/hobot_nav/maps/rdk_2026_hospital_static_1cm.pgm": "b67e83beb688fc627836da2df7a105a34ab6e431c50c8b7f406671f378ba6482",
+    "src/hobot_navigation/hobot_nav/maps/rdk_2026_hospital_static_1cm.yaml": "a48aec1aa9f6e657b04bef7727befa42a46015019e552fe89b6c71ffd586eaa7",
+    "src/hobot_navigation/hobot_nav/runtime/channel_v2/runtime_admission.csv": "f1b8d865214c67f7f4536806c66f5de47b5a055918a2a5f57fcfb9e251837870",
+    "src/hobot_navigation/hobot_nav/runtime/channel_v2/tubes/tube_center_ccw.csv": "ed6c02b5ad566e211daa181f3c9090fa44fff836ac8ef101c5c0dc04ea46d083",
+    "src/hobot_navigation/hobot_nav/runtime/channel_v2/tubes/tube_center_cw.csv": "e924686cb891a7bff088c6448dd17a7820e85b8c80efe7d911c7bb1515207678",
+    "src/hobot_navigation/hobot_nav/runtime/channel_v2/tubes/tube_inner_ccw.csv": "3f975d31e38d41f48bb5eb5bacd9a380fd79d99d997a1844426cf23b1bcdf527",
+    "src/hobot_navigation/hobot_nav/runtime/channel_v2/tubes/tube_inner_cw.csv": "4202fc37222983ac1884ef2e8596ac2131547f4ed762fab64e708172a1b33e38",
+    "src/hobot_navigation/hobot_nav/runtime/channel_v2/tubes/tube_outer_ccw.csv": "a5032f6687628d4101dbf7ba3763197f51176c2dc23cdb2e4e08e746d0d8fc22",
+    "src/hobot_navigation/hobot_nav/runtime/channel_v2/tubes/tube_outer_cw.csv": "ffb8ba03abad6c3aeda63a3cb02cf528cebc972bed534a9665efb90780b6cd16",
+    "tools/calibration/data/servo_left_pwm_angle.csv": "9c991fbac1ac2f399e7a98953b954f81ced13a4a1d2d63cd7a1820236e783b96",
+    "tools/calibration/data/servo_right_pwm_angle.csv": "87331b739a754e24454acda094fc22d285fcb07611e9ab05e766c345c7e9ab04",
+    "tools/calibration/servo_fit.c": "2f3d8e4788995ab25b210268282bb15da659f3f294b54256607c55b672f73bb5"
+  }
+}

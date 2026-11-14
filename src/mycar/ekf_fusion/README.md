@@ -17,8 +17,14 @@
 
 ```bash
 ros2 launch ekf_fusion ekf_fusion_only.launch.py \
-  params_file:=src/mycar/ekf_fusion/config/ekf.yaml
+  ekf_params_file:=src/mycar/ekf_fusion/config/ekf.yaml \
+  cleanup_existing:=false
 ```
+
+这是独立调试入口，默认同时启动底盘、地图预览、RViz 和单位 `map -> odom`。
+不要与另一套正在运行的底盘/EKF/TF 重复启动。示例关闭了自动清理旧节点；参数文件
+路径相对于当前工作区。`maps/` 中保留的 1 cm 地图与 `hobot_nav/maps/` 内容相同，
+用于本包独立调试，避免要求 EKF 包依赖导航集成包。
 
 完整导航链路使用：
 
@@ -28,3 +34,6 @@ ros2 launch hobot_nav navigation_core.launch.py
 
 公开包不包含雷达串口驱动、相机、任务识别或建图入口；雷达里程计如果要接入，必须
 明确设置 `odom1` 的话题、时间戳和协方差，并确认它不会抢占 EKF 的 TF。
+
+底盘轮速与 IMU 的标定、零偏和时间戳检查应先于融合参数调节；增加观测源不能替代
+这些检查。公开参数的 EKF 目标输出频率为 50 Hz，实际频率需在目标设备上测量。

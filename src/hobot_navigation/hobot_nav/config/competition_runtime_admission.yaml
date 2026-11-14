@@ -1,0 +1,294 @@
+competition_runtime_admission:
+  version: phase193_center_canonical_channel_manager
+  base_link_semantics: rear_axle_center_ground_projection
+  minimum_turning_radius_m: 0.35
+  race_continue:
+    default_enabled: true
+    startup_readiness_relaxed: false
+    runtime_odom_tf_hard_faults_preserved: true
+    runtime_costmap_payload_and_frame_required: true
+    runtime_costmap_age_is_supervisor_hard_gate: false
+    qr_initial_sync_changed_in_phase4: false
+    channel_abort_recovery: current_active_path_forward_suffix
+    channel_exhausted_suffix_recovery: bounded_live_pose_return_without_full_tube_replay
+    shared_angular_acceleration_radps2: 2.0
+    shared_angular_deceleration_radps2: -2.0
+    shared_angular_acceleration_reason: restored_for_rpp_tube_stability_after_field_oscillation
+    channel_recovery_speed_schedule_changed: false
+    channel_abort_same_pose_skip_m: 0.15
+    channel_controller_changed_in_abort_recovery: false
+    invalid_forward_cone_runtime_policy: ignore_frame_and_continue_current_path
+    side_return_connector_runtime_policy: continue_current_verified_side_tube
+    return_plan_attempts_from_live_pose: 3
+    runtime_fail_open_speed_schedule_changed: false
+  logging:
+    competition_quiet_mode_default: false
+    quiet_log_level: fatal
+    quiet_diagnostics_enabled: false
+    quiet_mission_audit_enabled: false
+    quiet_action_audit_enabled: false
+    motion_or_speed_semantics_changed: false
+  ros_graph_ownership:
+    expected_domain_id: 231
+    odom_publishers_required: 1
+    odom_publisher_node: ekf_fusion_node
+    external_domain_230_graph_admitted: false
+    local_costmap_size_changed: false
+    foxglove_bridge_owned_by_competition_launch: true
+    foxglove_bridge_transport: nav_udp_fastdds
+    foxglove_bridge_port: 8765
+  qr:
+    fixed_primary: {x: 3.60, y: 1.20}
+    fixed_backup: {x: 3.60, y: 0.80}
+    runtime_pose_source: fixed_map_xy_plus_calibrated_camera_board_bearing
+    fixed_map_base_xy_allowed: true
+    lane_bias_enabled: false
+    dynamic_replan_allowed: true
+    midcourse_replan_trigger: one_shot_map_x_parameter
+    midcourse_replan_x_default_m: 1.6
+    midcourse_obstacle_authority: latest_global_costmap_full_footprint
+    midcourse_goal_selection: primary_if_legal_else_backup
+    backup_orientation: primary_camera_aligned_yaw_without_hybrid_astar_return_loop
+    midcourse_planner_failure_policy: continue_old_path_without_second_compute
+    follow_abort_recovery: immediate_last_accepted_path_resubmit_without_hold_or_smac
+    cone_triggered_supervisor_replan_allowed: false
+    maximum_compute_path_actions: 4
+    maximum_follow_path_actions: unbounded_only_while_race_continue_and_qr_unlatched
+    fixed_observation_wait_allowed: false
+  direct_gate:
+    runtime_lut_allowed: false
+    offline_reference_only: true
+    lut_file: runtime/direct_gate_robust_neutral.bin
+    lut_schema_version: 3
+    lut_size_bytes: 52722
+    lut_sha256: 70e4ff2ef755fc6997eb33b336191c18762a2e720384902c7c42f3d0ea5b26a2
+    query_pose_source: qr_latched_map_pose
+    query_inputs: [x, y, yaw]
+    query_count_max: 0
+    output: [REVERSE]
+    neutral_steering_feedback_required: false
+    online_direct_search_allowed: false
+    next_state_runtime_allowed: false
+    query_requires_active_qr_action: true
+    handover_requires_velocity_zero_only_for_reverse: true
+    gate_candidate_count_max: 3
+    gate_planner: GridBased
+    cone_hard_radius_m: 0.15
+    cone_receipt_age_max_sec: 0.50
+    direct_true_action: not_used_force_reverse_after_qr
+    path_audit_source: static_map_plus_latest_global_local_costmaps_and_latest_valid_cones
+    planning_failure_fallback: original_reverse
+    follow_failure_fallback: original_reverse
+    post_reverse_action: nav2_compute_path_from_current_pose
+    post_reverse_lut_query_allowed: false
+    post_reverse_planning_failure: safe_stop_hold
+  reverse:
+    design_speed_source: reverse_speed_limit
+    default_speed_limit_mps: 0.35
+    source: frozen_qr_pose_at_legal_qr_callback
+    primitive_families: [straight, radius_10m, radius_6m, radius_4m, radius_3m, radius_2m, radius_1p5m, radius_1p2m, radius_1m, radius_0p8m, radius_0p5m]
+    candidate_count_max: 11
+    probe_count_max: 165
+    search_step_m: 0.10
+    max_search_distance_m: 1.50
+    search_order: distance_layers_until_60_to_90deg_then_closest_to_90deg
+    target_stop_yaw_deg: [60.0, 90.0]
+    exhausted_search_fallback: closest_to_90deg_among_candidates_lte_90deg
+    interleaved_by_distance: true
+    max_search_threads: 1
+    stop_overrun_model: v*actuation_latency+v^2/(2*worst_case_deceleration)+margin
+    curved_stop_integration: true
+    initial_steering_source: zero_curvature
+    terminal_yaw_required: false
+    immutable_costmap_snapshot_per_solve: true
+    qr_pose_immutable_during_solve: true
+    map_pose_epoch_validity_gate: false
+    stale_solver_retry: false
+    slide_compensation: forward_projection_from_frozen_qr_yaw
+    execution_reanchor: same_selected_primitive_from_actual_stop_pose
+    gate_entry_lut: runtime/reverse_gate_entry_clean.bin
+    gate_entry_goal_ids: runtime/reverse_gate_goal_id_clean.bin
+    gate_entry_lut_sha256: 9bb03a766773051813981abda736ef352fffd0c1758c3fa2bc131987b380ebf0
+    gate_entry_goal_ids_sha256: cc681ff0616d43073a248cb8e1a6962ad754380b5e20c5125ed22614d58a740f
+    gate_entry_clean_predicate: strict_and_interior_xy_and_x_lte_2p60_and_y_lte_1p40
+    gate_entry_clean_state_count: 890
+    gate_entry_lut_runtime_hard_gate: true
+    gate_entry_lut_role: reverse_search_terminal_condition_only
+    gate_entry_lookup: nearest_cell_only
+    gate_entry_neighbor_borrowing_allowed: false
+    goal_id_semantics: RGEG2_gate_witness_for_reverse_only
+    tube_join_resolution_allowed: false
+    state_search_ros_path_allocation_allowed: true
+    strict_swept_step_m: 0.015
+    post_reverse_gate_smac_max: 1
+    failure_policy: REVERSE_NO_CLEAN_LUT_MATCH_hold
+    metrics:
+      - reverse_state_search_ms
+      - reverse_candidates_built
+      - reverse_strict_audit_ms
+      - reverse_total_solver_ms
+      - reverse_exec_reanchored
+      - reverse_entry_selected
+    x5_targets_ms:
+      state_search_p99: 5.0
+      lightweight_total_p99: 10.0
+      strict_top2_audit_p99: 50.0
+    gate_target_regions: [left, center, right]
+    actual_stop_reaudit_required: true
+    final_reverse_hard_check: one_swept_footprint_costmap_pass
+    max_motion_actions: 2
+    historical_endpoint_lookup_allowed: false
+  gate:
+    planner_id: GridBased
+    start_pose_source: actual_post_reverse_pose
+    selected_goal_source: fixed_post_reverse_gate_handoff
+    maximum_compute_path_actions: 1
+    gate_follow_action_required_before_channel: false
+    fixed_handoff_pose: {x_m: 2.50, y_m: 2.30, yaw_rad: 1.570796327}
+    handoff_region_xy_m: {x: [2.30, 2.70], y: [2.25, 2.40]}
+    handoff_yaw_required: false
+    action_success_not_required_inside_region: true
+    follow_controller: FollowPath
+    direct_reverse_to_channel_entry:
+      default_enabled: true
+      start_pose_source: actual_stationary_post_reverse_pose
+      planner_id: GridBased
+      targets: [channel_entry_S1, channel_entry_S2]
+      fallback: existing_post_reverse_gate_flow
+      reverse_speed_changed: false
+      entry_controller_changed: false
+    goal_checker: GateEntryGoalChecker
+    xy_goal_tolerance_m: 0.30
+    yaw_goal_tolerance_rad: 3.141592653589793
+    goal_checker_override_source: fixed_start_runtime_profile
+    stateful: false
+    supervisor_path_check: light_frame_finite_length_and_goal_only
+    nav2_owns_runtime_collision_checking: true
+    global_gate_side_soft_layer:
+      plugin: lidar_perception::GateSideSoftLayer
+      mesh_y_m: [2.00, 2.90]
+      left_band_x_m: [2.00, 2.10]
+      right_band_x_m: [2.90, 3.00]
+      maximum_cost: 220
+      local_costmap_enabled: false
+    ordinary_inflation_radius_m: 0.11
+  channel:
+    fixed_template_regions: [CENTER_ENTRY_LOCK, C_RING, CENTER_EXIT, B_CENTERLINE]
+    runtime_load_allowed: true
+    coordinate_frame: map
+    default_lane: center
+    tube_families: [inner_variable_offset, center_canonical, outer_variable_offset]
+    tubes_per_direction: 3
+    tube_design_minimum_turning_radius_m: 0.40
+    vehicle_hard_minimum_turning_radius_m: 0.35
+    center_progress_semantics: modular_unwrapped_center_s
+    bev_progress_reprojection: center_s_only
+    entry_to_center_handoff_progress_m: 0.25
+    entry_to_center_forward_runway_m: 0.15
+    entry_to_center_distance_gate: false
+    entry_to_center_yaw_gate: false
+    entry_to_center_waits_for_entry_action_terminal: false
+    rpp_collision_detection_in_admitted_race_v2: false
+    cone_avoidance_owner: supervisor_center_side_tube_selection
+    static_tube_and_command_limiter_preserved: true
+    entry_planner: GridBased
+    entry_primary:
+      CW: {x: 1.895787, y: 3.18, yaw_rad: 3.141592653589793, center_index: 795, center_s_m: 7.942258}
+      CCW: {x: 3.104618, y: 3.18, yaw_rad: 0.0, center_index: 190, center_s_m: 1.898164}
+    entry_fallback:
+      CW: {x: 1.745932, y: 3.18, yaw_rad: 3.141592653589793, center_index: 810, center_s_m: 8.092113}
+      CCW: {x: 3.254473, y: 3.18, yaw_rad: 0.0, center_index: 205, center_s_m: 2.048019}
+    cone_side_lut: runtime/channel_cone_side_class_1cm.bin
+    cone_side_lut_sha256: cc5ee4bf0f952f52432f4e7f46e36062d691c9388b3803edeb8bdbaddcfe6261
+    cone_forward_lookahead_m: 1.25
+    cone_passed_margin_m: 0.45
+    lane_transitions: Center_to_Side_and_Side_to_Center_only
+    direct_inner_outer_transition_allowed: false
+    transition_length_m: 0.52
+    transition_remaining_straight_min_m: 0.60
+    online_smac_inside_C_allowed: false
+    selected_tube_hard_keepout_allowed: false
+    normal_online_tube_scoring_allowed: false
+    normal_tracking_error_cancel_allowed: false
+    normal_lane_switch_action_budget: telemetry_only
+    entry_to_center_replacement: accept_new_rpp_goal_before_retiring_entry_mppi
+    lane_action_replacement: accept_new_rpp_goal_before_retiring_old_rpp_goal
+    side_to_center_preempt_remaining_m: 0.30
+    return_preplan: background_smac_while_exit_rpp_continues
+    return_preplan_max_attempts_per_channel: 1
+    return_preplan_failure_policy: keep_channel_then_bounded_live_pose_plan_at_gate_out
+    return_action_replacement: accept_return_mppi_before_retiring_exit_rpp
+    return_handoff_gate: admitted_exit_branch_monotonic_station_latch
+    return_handoff_distance_or_yaw_instant_gate: false
+    exit_branch_corner_speed_owner: active_channel_path_curvature
+    return_handoff_speed_limit_mps: 0.50
+    return_handoff_speed_release_distance_m: 0.75
+    expected_lane_switch_cancel_is_failure: false
+    reverse_recovery_in_c_allowed: false
+    region_skipping_allowed: false
+    offline_full_footprint_report: config/channel_tubes/phase193_geometry_report.json
+    supervisor_runtime_full_footprint_audit: false
+    channel_keepout_filter_enabled: false
+    runtime_collision_owner: Nav2_costmaps_ConeLayer_and_RPP
+    controller_id: FollowPathChannel
+    controller_plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+    safe05_desired_linear_vel_mps: 0.50
+    race06_desired_linear_vel_mps: 0.60
+    corner_speed_limit_mps: 0.50
+    lane_change_speed_limit_mps: 0.50
+    side_extra_lap_distance_accounting: current_to_anchor_plus_connector_plus_side_suffix
+    corner_preview_distance_m: 0.50
+    corner_exit_hold_distance_m: 0.15
+    regulated_linear_scaling_min_speed_mps: 0.35
+    speed_limit_topic: /speed_limit
+    regulated_linear_scaling_min_radius_m: 0.40
+    exit_split:
+      CW: {x: 2.961454, y: 3.18, yaw_rad: 3.141592653589793}
+      CCW: {x: 2.038546, y: 3.18, yaw_rad: 0.0}
+    return_handoff_region:
+      x_m: [2.35, 2.65]
+      y_m: [1.84, 1.90]
+      yaw_center_rad: -1.5707963267948966
+      yaw_tolerance_deg: 20
+    completion_gate: one_center_canonical_lap_and_center_lane_and_return_handoff_region
+  stage_gates:
+    bev: /race/bev_localization_corrections_enabled
+    vlm: /race/vlm_image_cache_enabled
+    direct_gate: /race/direct_gate_active
+  static_rule_map:
+    green_drivable_setback_m: 0.0
+    runtime_map_resolution_m: 0.01
+    runtime_map_file: rdk_2026_hospital_static_1cm.pgm
+    runtime_map_sha256: b67e83beb688fc627836da2df7a105a34ab6e431c50c8b7f406671f378ba6482
+    conversion: conservative_2x2_occupied_then_unknown_then_free
+    global_costmap_resolution_m: 0.01
+    local_costmap_resolution_m: 0.03
+    green_is_lethal: true
+  bev_correction:
+    tracking_process_interval_sec: 0.50
+    odom_se2_interpolation_max_bracket_gap_sec: 0.08
+    typed_candidate_max_result_age_sec: 0.80
+    strong_one_frame: {score: 0.82, margin: 0.08, coverage: 0.75}
+    normal_two_frame: {score: 0.72, margin: 0.04, coverage: 0.65}
+    gross_outlier: {translation_m: 0.45, yaw_deg: 15.0}
+    competition_direct_mode: true
+    competition_keyframe_creation_allowed: false
+    target_publish_rate_hz: 30.0
+    max_translation_rate_mps: 0.10
+    max_yaw_rate_degps: 8.0
+    hard_tf_jump_allowed: false
+    action_interruption_allowed: false
+  completion:
+    vlm_failure_blocks_return: false
+    parking_footprint_fraction_min: 0.50
+    stationary_minimum_duration_sec: 0.15
+    stationary_samples_required: 4
+    stationary_maximum_odom_age_sec: 0.10
+  unresolved_vehicle_evidence:
+    - physical_validation_of_integrated_origincar_pro_camera_tf
+    - physical_0_35_m_turning_radius_with_pwm_800_2200
+    - admitted_cw_and_ccw_channel_templates
+    - command_observer_uncertainty_and_physical_steering_feedback_field_validation
+    - worst_case_loaded_low_friction_braking_validation
+    - x5_reverse_state_light_and_strict_p99_validation
+    - x5_cpu_and_latency_measurement_under_full_stack

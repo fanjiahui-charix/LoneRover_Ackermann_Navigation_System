@@ -1,0 +1,29 @@
+# Calibrated on the competition vehicle at 1920x1080. Reprojection error:
+# 0.807459. Source copy of
+# /root/calib/origincar_pro/usb_camera_calibration.yaml.
+camera_name: hobot_usb_camera
+image_width: 1920
+image_height: 1080
+distortion_model: plumb_bob
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [682.7522450473028, 0.0, 948.0233927822394,
+         0.0, 684.6825030858382, 552.5465008451092,
+         0.0, 0.0, 1.0]
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.023454629094301023, -0.04948914745484194,
+         0.0013863257221465033, -0.001032404275950429,
+         0.009598177531775167]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [682.7522450473028, 0.0, 948.0233927822394, 0.0,
+         0.0, 684.6825030858382, 552.5465008451092, 0.0,
+         0.0, 0.0, 1.0, 0.0]

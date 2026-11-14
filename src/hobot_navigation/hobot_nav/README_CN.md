@@ -58,3 +58,9 @@ ros2 launch hobot_nav lidar_pipeline.launch.py \
 | `/cmd_vel_safe` | 最终底盘速度命令 |
 
 动态 `odom -> base_link` 由 `ekf_fusion` 发布；`base_link -> imu_link` 和 `base_link -> laser_link` 是静态外参。
+
+## 比赛任务入口
+
+比赛任务由 [`CompetitionSupervisor`](src/competition_supervisor.cpp) 管理，
+[`MotionActionArbiter`](src/motion_action_arbiter.cpp) 负责 Nav2 Action 交接。
+构建选项、车端依赖与完整启动命令见 [README_COMPETITION.md](README_COMPETITION.md)。

@@ -1,0 +1,42 @@
+collision_monitor:
+  ros__parameters:
+    use_sim_time: false
+    base_frame_id: "base_link"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "/cmd_vel"
+    cmd_vel_out_topic: "/cmd_vel_safe"
+    transform_tolerance: 0.3
+    # N10 publishes the beginning-of-sweep timestamp; normal delivery age is
+    # about 0.36 s. Keep a bounded 0.60 s watchdog window: normal mechanical
+    # scan latency is accepted, while a real source outage still stops safely.
+    source_timeout: 0.60
+    base_shift_correction: true
+    # Keep an emergency stop pulse short; this is independent of scan
+    # freshness and must not be enlarged to compensate for scan latency.
+    stop_pub_timeout: 0.30
+
+    observation_sources: ["scan"]
+    scan:
+      type: "scan"
+      # Use the same filtered, timestamp-preserving scan as the limiter and
+      # localization chain. Do not feed derived cone clouds to Collision
+      # Monitor; cones remain a local/global costmap responsibility.
+      topic: "/scan"
+      enabled: true
+
+    # MPPI and the local obstacle layer handle normal avoidance.
+    # Humble polygons do not distinguish forward from reverse motion, so a
+    # fixed front-only zone around the QR board could suppress the planned
+    # escape in both directions. Keep only the velocity-aware trajectory
+    # projection as the final major-collision guard.
+    polygons: ["FootprintApproach"]
+    FootprintApproach:
+      type: "polygon"
+      action_type: "approach"
+      footprint_topic: "/local_costmap/published_footprint"
+      time_before_collision: 0.45
+      simulation_time_step: 0.05
+      max_points: 5
+      visualize: true
+      polygon_pub_topic: "collision_monitor/approach"
+      enabled: true

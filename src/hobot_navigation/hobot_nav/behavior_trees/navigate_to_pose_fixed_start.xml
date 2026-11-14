@@ -1,0 +1,45 @@
+<!--
+  Fixed-start Ackermann navigation.
+
+  The path-validity gate is deliberately checked at 2 Hz. A valid existing
+  path is kept (including inside the final 0.60 m), so a transient planner
+  failure cannot cancel FollowPath. ComputePathToPose runs for the first goal,
+  a changed goal, or after the current path actually becomes invalid.
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="3" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithPersistentValidPath">
+        <RateController hz="2.0" name="PathValidityAndPlanningAt2Hz">
+          <Fallback name="KeepValidPathOrCompute">
+            <ReactiveSequence name="KeepUnchangedValidPath">
+              <Inverter>
+                <GlobalUpdatedGoal/>
+              </Inverter>
+              <IsPathValid path="{path}"/>
+            </ReactiveSequence>
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+          </Fallback>
+        </RateController>
+        <FollowPath path="{path}" controller_id="FollowPath"/>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated/>
+        <RoundRobin name="LimitedAckermannRecoveries">
+          <Sequence name="ClearLocalThenRetry">
+            <ClearEntireCostmap name="ClearLocalCostmap-Recovery" service_name="local_costmap/clear_entirely_local_costmap"/>
+            <Delay delay_msec="250">
+              <AlwaysSuccess/>
+            </Delay>
+          </Sequence>
+          <Sequence name="ClearGlobalThenRetry">
+            <ClearEntireCostmap name="ClearGlobalCostmap-Recovery" service_name="global_costmap/clear_entirely_global_costmap"/>
+            <Delay delay_msec="600">
+              <AlwaysSuccess/>
+            </Delay>
+          </Sequence>
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

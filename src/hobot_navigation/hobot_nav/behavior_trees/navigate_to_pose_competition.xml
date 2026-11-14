@@ -1,0 +1,45 @@
+<!--
+  Competition segment navigation.
+
+  Post-QR routes are submitted one semantic point at a time so each segment
+  can be planned from the measured arrival pose against the current cone
+  costmap. The route is forward-only; reverse sampling is isolated to the QR
+  escape tree so a sharp turn cannot oscillate between forward and reverse.
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="3" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithPersistentValidPath">
+        <RateController hz="2.0" name="PathValidityAndPlanningAt2Hz">
+          <Fallback name="KeepValidPathOrCompute">
+            <ReactiveSequence name="KeepUnchangedValidPath">
+              <Inverter>
+                <GlobalUpdatedGoal/>
+              </Inverter>
+              <IsPathValid path="{path}"/>
+            </ReactiveSequence>
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+          </Fallback>
+        </RateController>
+        <FollowPath path="{path}" controller_id="FollowPath"/>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated/>
+        <RoundRobin name="LimitedAckermannRecoveries">
+          <Sequence name="ClearLocalThenRetry">
+            <ClearEntireCostmap name="ClearLocalCostmap-Recovery" service_name="local_costmap/clear_entirely_local_costmap"/>
+            <Delay delay_msec="250">
+              <AlwaysSuccess/>
+            </Delay>
+          </Sequence>
+          <Sequence name="ClearGlobalThenRetry">
+            <ClearEntireCostmap name="ClearGlobalCostmap-Recovery" service_name="global_costmap/clear_entirely_global_costmap"/>
+            <Delay delay_msec="600">
+              <AlwaysSuccess/>
+            </Delay>
+          </Sequence>
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

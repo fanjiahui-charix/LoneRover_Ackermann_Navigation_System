@@ -1,0 +1,12 @@
+mission_points:
+  ros__parameters:
+    frame_id: map
+    points:
+      P: [0.0, 0.0, 0.0]
+      A: [0.0, 0.0, 0.0]
+      B: [0.0, 0.0, 0.0]
+      C: [0.0, 0.0, 0.0]
+    routes:
+      default: [P, A, B, C, P]
+      via_b: [P, A, B, C, P]
+      via_c: [P, A, C, P]

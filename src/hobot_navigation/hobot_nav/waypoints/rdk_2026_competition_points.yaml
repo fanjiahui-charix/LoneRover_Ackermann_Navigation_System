@@ -1,0 +1,244 @@
+competition_mission:
+  ros__parameters:
+    # P and QR are tied to the already real-vehicle-tested fixed-start points.
+    # The remaining points lie on the centerline geometry of the official 5 m x 5 m map.
+    approved: true
+    frame_id: map
+    qr_timeout_sec: 8.0
+    vlm_timeout_sec: 12.0
+    mission_timeout_sec: 175.0
+
+    points:
+      QR_SCAN:
+        pose: [3.60, 1.20, 0.3009202343604251]
+        yaw_tolerance: 0.35
+
+      # Entry and exit intentionally share XY. The surrounding geometric points
+      # make the Ackermann vehicle cross the gate in opposite directions.
+      CHANNEL_GATE_IN:
+        pose: [2.50, 2.50, 1.5707963267948966]
+        # Nav2 plans toward the region center, but mission success is the
+        # rectangular gate region below, not this exact pose.
+        navigation_pose: [2.50, 2.675, 1.5707963267948966]
+        yaw_tolerance: 0.35
+        # The live cone layer can overlap the footprint while the Ackermann
+        # controller performs its final centimetres. Crossing this radius is
+        # sufficient for the semantic channel-center checkpoint.
+        arrival_tolerance: 0.65
+        arrival_region:
+          x_min: 2.20
+          x_max: 2.80
+          y_min: 2.55
+          y_max: 2.80
+          heading: positive_y
+          # sin(yaw)>=0.25: broadly facing into the +Y channel direction.
+          min_heading_component: 0.25
+      CHANNEL_GATE_OUT:
+        pose: [2.50, 2.50, -1.5707963267948966]
+        navigation_pose: [2.50, 2.325, -1.5707963267948966]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.65
+        arrival_region:
+          x_min: 2.20
+          x_max: 2.80
+          y_min: 2.20
+          y_max: 2.45
+          heading: negative_y
+          min_heading_component: 0.25
+
+      # Ordered clockwise regions. The pose is only a safe centerline planning
+      # hint; mission progress is decided by the non-overlapping rectangle and
+      # travel direction. This prevents a large circular tolerance from
+      # skipping the left turn beside a cone.
+      CW_POINT_1:
+        # Enter the whole lower-left region, not the cone-side approximate
+        # endpoint. The primary candidate stays far to the left and only asks
+        # for a broadly westbound heading, avoiding an Ackermann overshoot
+        # solely to become exactly parallel with -X.
+        pose: [1.145, 3.18, 3.141592653589793]
+        navigation_pose: [1.145, 3.18, 3.141592653589793]
+        navigation_candidates:
+          - [1.145, 3.18, 3.141592653589793]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 0.65
+          x_max: 1.35
+          y_min: 2.80
+          # The 19:18 field run safely completed the cone pass at y=3.238.
+          # Accept that path endpoint immediately instead of waiting for an
+          # abort and switching to a worse, south-facing fallback approach.
+          y_max: 3.30
+          heading: negative_x
+          min_heading_component: 0.25
+      CW_POINT_2:
+        pose: [0.75, 3.75, 1.5707963267948966]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 0.55
+          x_max: 0.95
+          y_min: 3.55
+          y_max: 3.95
+          heading: positive_y
+          min_heading_component: 0.25
+      CW_POINT_3:
+        pose: [2.50, 4.35, 0.0]
+        # Legacy center reference only. It is deliberately absent from the
+        # executable route because a cone may cover this exact neighborhood.
+        soft_skip: true
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.65
+      CW_TOP_ENTRY:
+        pose: [1.25, 4.30, 0.0]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 1.05
+          x_max: 1.45
+          y_min: 4.10
+          y_max: 4.50
+          heading: positive_x
+          min_heading_component: 0.25
+      CW_TOP_EXIT:
+        pose: [3.75, 4.30, 0.0]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 3.55
+          x_max: 3.95
+          y_min: 4.10
+          y_max: 4.50
+          heading: positive_x
+          min_heading_component: 0.25
+      CW_POINT_4:
+        pose: [4.25, 3.75, -1.5707963267948966]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 4.05
+          x_max: 4.45
+          y_min: 3.55
+          y_max: 3.95
+          heading: negative_y
+          min_heading_component: 0.25
+      CW_POINT_5:
+        pose: [3.855, 3.18, 3.141592653589793]
+        navigation_pose: [3.855, 3.18, 3.141592653589793]
+        navigation_candidates:
+          - [3.855, 3.18, 3.141592653589793]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 3.65
+          x_max: 4.35
+          y_min: 2.80
+          y_max: 3.30
+          heading: negative_x
+          min_heading_component: 0.25
+
+      # Counterclockwise uses the same six physical regions in reverse order
+      # with every travel direction flipped.
+      CCW_POINT_1:
+        pose: [3.855, 3.18, 0.0]
+        navigation_pose: [3.855, 3.18, 0.0]
+        navigation_candidates:
+          - [3.855, 3.18, 0.0]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 3.65
+          x_max: 4.35
+          y_min: 2.80
+          y_max: 3.30
+          heading: positive_x
+          min_heading_component: 0.25
+      CCW_POINT_2:
+        pose: [4.25, 3.75, 1.5707963267948966]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 4.05
+          x_max: 4.45
+          y_min: 3.55
+          y_max: 3.95
+          heading: positive_y
+          min_heading_component: 0.25
+      CCW_POINT_3:
+        pose: [2.50, 4.35, 3.141592653589793]
+        soft_skip: true
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.65
+      CCW_TOP_ENTRY:
+        pose: [3.75, 4.30, 3.141592653589793]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 3.55
+          x_max: 3.95
+          y_min: 4.10
+          y_max: 4.50
+          heading: negative_x
+          min_heading_component: 0.25
+      CCW_TOP_EXIT:
+        pose: [1.25, 4.30, 3.141592653589793]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 1.05
+          x_max: 1.45
+          y_min: 4.10
+          y_max: 4.50
+          heading: negative_x
+          min_heading_component: 0.25
+      CCW_POINT_4:
+        pose: [0.75, 3.75, -1.5707963267948966]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 0.55
+          x_max: 0.95
+          y_min: 3.55
+          y_max: 3.95
+          heading: negative_y
+          min_heading_component: 0.25
+      CCW_POINT_5:
+        pose: [1.145, 3.18, 0.0]
+        navigation_pose: [1.145, 3.18, 0.0]
+        navigation_candidates:
+          - [1.145, 3.18, 0.0]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.0
+        arrival_region:
+          x_min: 0.65
+          x_max: 1.35
+          y_min: 2.80
+          y_max: 3.30
+          heading: positive_x
+          min_heading_component: 0.25
+
+      # This makes the final approach to P straight and westbound. The final
+      # heading is audited with a wide window; Nav2 remains position-priority.
+      P_APPROACH:
+        pose: [0.90, 0.21, 3.141592653589793]
+        yaw_tolerance: 0.35
+        arrival_tolerance: 0.40
+      P_FINISH:
+        pose: [0.41, 0.21, 3.141592653589793]
+        yaw_tolerance: 0.35
+        # No semantic early acceptance: use the baseline Nav2 0.08371 m
+        # position checker for the final scored return to P.
+        arrival_tolerance: 0.0
+
+    routes:
+      clockwise_to_vlm:
+        [CHANNEL_GATE_IN, CW_POINT_1, CW_POINT_2,
+         CW_TOP_ENTRY, CW_TOP_EXIT, CW_POINT_4, CW_POINT_5]
+      clockwise_after_vlm:
+        [CHANNEL_GATE_OUT]
+      counterclockwise_to_vlm:
+        [CHANNEL_GATE_IN, CCW_POINT_1, CCW_POINT_2,
+         CCW_TOP_ENTRY, CCW_TOP_EXIT, CCW_POINT_4, CCW_POINT_5]
+      counterclockwise_after_vlm:
+        [CHANNEL_GATE_OUT]
+      finish: [P_APPROACH, P_FINISH]

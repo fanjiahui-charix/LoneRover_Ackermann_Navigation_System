@@ -11,3 +11,10 @@
 *.h265 binary
 *.nv12 binary
 *.yuv binary
+
+# Runtime admission hashes use the exact LF CSV bytes.
+src/hobot_navigation/hobot_nav/config/channel_tubes/*.csv text eol=lf
+src/hobot_navigation/hobot_nav/config/channel_transitions/*.csv text eol=lf
+src/hobot_navigation/hobot_nav/config/channel_branches/*.csv text eol=lf
+src/hobot_navigation/hobot_nav/runtime/channel_v2/**/*.csv text eol=lf
+src/hobot_navigation/hobot_nav/runtime/channel_v2/**/*.yaml text eol=lf
