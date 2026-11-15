@@ -131,11 +131,11 @@ flowchart TB
 
 启动后，`origincarpro_base` 发布底盘反馈和 IMU，`ekf_fusion` 完成松耦合轮速—IMU 融合，并且只发布动态的 `odom -> base_link`。地图坐标系通过已有静态地图和固定起点位姿建立；当前现场命令同时启动 BEV stack，BEV 的计算和 `map -> odom` 修正由 Supervisor 按任务阶段控制。
 
-### 地图与轨迹可视化
+### 地图、轨迹与 LUT 可视化
 
-![Channel v2 内、中、外 Tube 轨迹](docs/assets/channel_tubes_v2.png)
+![通道 Tube 轨迹、避障 LUT 与倒车入口 LUT](docs/assets/navigation_map_and_lut.png)
 
-图中使用 Channel v2 准入清单对应的内 / 中 / 外三组 Tube，包含顺、逆时针六条路径；三组路径在弯道处也保持各自的几何形状。[轨迹数据](src/hobot_navigation/hobot_nav/runtime/channel_v2/tubes/) · [生成脚本](tools/visualization/README.md)
+左图展示内 / 中 / 外三组 Tube 轨迹与通道避障 LUT，三组路径在弯道处保持分离；右图展示倒车入口 LUT，颜色表示各位置可用的航向数量。
 
 ### 二、系统特性
 
@@ -394,7 +394,7 @@ ros2 launch hobot_nav competition_runtime.launch.py \
   log_level:=error
 ```
 
-这条命令加载已有的 1 cm 静态地图与随安装包提供的 Channel v2 资产。`vlm_server_ip` 填写现场服务地址。
+这条命令加载已有的 1 cm 静态地图，以及随安装包提供的通道轨迹与查找表。`vlm_server_ip` 填写现场服务地址。
 ROS Domain 231 用于隔离不同车辆的 DDS 数据。
 
 ### 八、赛题具体怎么做

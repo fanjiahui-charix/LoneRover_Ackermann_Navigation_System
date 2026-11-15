@@ -185,11 +185,11 @@ the existing static map and the fixed-start pose. The current field command also
 starts the BEV stack; the Supervisor gates BEV computation and map-to-odom
 correction by mission stage.
 
-### Map and trajectory visualization
+### Map, Tube paths and lookup tables
 
-![Channel v2 inner, center and outer Tube paths](docs/assets/channel_tubes_v2.png)
+![Channel Tube paths, obstacle-avoidance LUT and reverse-entry LUT](docs/assets/navigation_map_and_lut.png)
 
-The plot uses the manifest-bound Channel v2 inner / center / outer Tube paths in both directions. The three lane geometries remain distinct around the corners. [Path data](src/hobot_navigation/hobot_nav/runtime/channel_v2/tubes/) · [Plotting script](tools/visualization/README.md)
+The left panel shows the inner / center / outer Tube paths and the channel obstacle-avoidance LUT, with distinct lane geometries around the corners. The right panel shows the reverse-entry LUT, colored by the number of valid yaw bins at each position.
 
 ### 2. System features
 
@@ -556,7 +556,7 @@ ros2 launch hobot_nav competition_runtime.launch.py \
   log_level:=error
 ~~~
 
-The command loads the existing 1 cm static map and the bundled Channel v2 assets.
+The command loads the existing 1 cm static map and the bundled channel paths and lookup tables.
 Set `vlm_server_ip` to the field service address. ROS Domain 231 isolates the vehicle DDS graph.
 
 ### 8. How the three tasks were solved
