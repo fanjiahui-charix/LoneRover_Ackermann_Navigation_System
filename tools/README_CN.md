@@ -25,7 +25,7 @@
         -> 低速实体车验证
 ```
 
-需要 rosbag 的工具都通过参数显式接收数据路径。个人 rosbag、日志和结果目录不放在仓库中。
+需要 rosbag 的工具都通过参数显式接收数据路径。
 
 ```bash
 python3 tools/vehicle_model/test_ackermann_vehicle_simulator.py

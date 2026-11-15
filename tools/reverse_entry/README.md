@@ -20,4 +20,4 @@ python3 tools/reverse_entry/validate_reverse_entry_paths.py --help
 python3 tools/reverse_entry/build_clean_reverse_entry_lut.py --help
 ```
 
-生成结果应写到仓库外的输出目录。车辆尺寸、最小转弯半径、地图或舵机转角标定变化后，旧 LUT 不能直接继续使用。
+车辆尺寸、最小转弯半径、地图或舵机转角标定变化后，旧 LUT 不能直接继续使用。

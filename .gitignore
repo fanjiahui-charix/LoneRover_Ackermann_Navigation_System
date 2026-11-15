@@ -1,45 +1,41 @@
+# ROS build outputs and local build helpers
 /build/
 /devel/
 /install/
 /log/
-build.sh
-push_car.sh
+/build.sh
+/push_car.sh
+
+# Local tooling
 /.catkin_tools/
 /.cache/
 /.nested_git_backup/
+.superpowers/
+.sisyphus/
+/.claude/worktrees/
+/AGENTS.md
+
+# Python caches
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
 
+# Temporary files and archives
 .DS_Store
 *.log
 *.zip
-
 *.7z
-*.zip.superpowers/
-.sisyphus/
+*.baiduyun.uploading.cfg
+task_plan.md
+findings.md
+progress.md
 
-
-# brainstorming visual companion
-.superpowers/
-
-# local bag exports and temporary artifacts
-/.claude/worktrees/
+# Local recordings and generated outputs
 /*.db3
 /metadata.yaml
-logs/**/bag/*.db3
-logs/**/bag/metadata.yaml
 /logs/
 /tools/exports/
 /tools/local_bags/
 /vehicle_assets/
-/AGENTS.md
-/src.zip
 /codex_tube_offline_bundle_*/
-/tools/**/__pycache__/
-*.baiduyun.uploading.cfg
-
-# local agent planning notes (keep these outside the public source tree)
-task_plan.md
-findings.md
-progress.md

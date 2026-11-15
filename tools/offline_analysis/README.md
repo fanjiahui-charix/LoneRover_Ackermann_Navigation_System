@@ -10,4 +10,4 @@
 | `plot_limiter_ab.py` | 对比限制器实验结果 |
 | `plot_native_curvature_compare.py` | 对比路径曲率、车辆曲率和横向误差 |
 
-数据路径都通过命令行参数传入，个人 rosbag、日志和生成结果不放在仓库里。
+数据路径通过命令行参数传入。

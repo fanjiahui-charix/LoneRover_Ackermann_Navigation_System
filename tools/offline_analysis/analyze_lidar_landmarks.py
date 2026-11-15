@@ -312,8 +312,8 @@ def inspect_topics_sqlite(db_path: Path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--bag', type=Path, default=Path('/root/2025smartcar/cc_ws/ros_workspace/2026-06-27_18-27-41_0.db3'))
-    ap.add_argument('--output', type=Path, default=Path('/root/2025smartcar/cc_ws/ros_workspace/tools/exports/lidar_landmark_stats.json'))
+    ap.add_argument('--bag', type=Path, required=True)
+    ap.add_argument('--output', type=Path, required=True)
     ap.add_argument('--trim-start-sec', type=float, default=5.0)
     ap.add_argument('--trim-end-sec', type=float, default=5.0)
     ap.add_argument('--min-range', type=float, default=0.05)

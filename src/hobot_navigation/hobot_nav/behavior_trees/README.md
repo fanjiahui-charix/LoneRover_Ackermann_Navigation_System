@@ -16,5 +16,5 @@
 
 同时去掉了 Nav2 官方默认树里的 `Spin` 恢复动作，避免阿克曼底盘在恢复阶段尝试原地转向。
 
-任务触发、路线选择和外部任务状态机不属于这个公开包。这里的 BT 只负责
-一次 Nav2 导航 action 内部的规划、跟踪、重规划和恢复。
+比赛任务阶段和路线选择由 [`CompetitionSupervisor`](../src/competition_supervisor.cpp)
+管理；这里的 BT 负责一次 Nav2 导航 action 内部的规划、跟踪、重规划和恢复。

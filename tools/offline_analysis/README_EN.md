@@ -10,4 +10,4 @@ These scripts read user-provided rosbags, CSV files, or run results. They do not
 | `plot_limiter_ab.py` | compare limiter experiments |
 | `plot_native_curvature_compare.py` | compare path curvature, vehicle curvature, and lateral error |
 
-All data paths are passed explicitly on the command line. Personal rosbags, logs, and generated results stay outside the repository.
+Pass data paths explicitly on the command line.
