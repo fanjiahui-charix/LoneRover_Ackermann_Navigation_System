@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render README figures from admitted Channel v2 Tubes and servo assets.
+"""Render README figures from Tube paths, lookup tables and servo assets.
 
 Offline generation reads the published repository assets directly.
 Dependencies: matplotlib, numpy, Pillow, PyYAML.
@@ -11,6 +11,7 @@ import argparse
 import csv
 import hashlib
 import re
+import struct
 from pathlib import Path
 
 import matplotlib
@@ -19,8 +20,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import BoundaryNorm, ListedColormap
 from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 from PIL import Image
 
 
@@ -28,7 +30,13 @@ INK = "#182d42"
 MUTED = "#596d80"
 LANES = {"inner": "#009b8d", "center": "#de8b1a", "outer": "#4977c7"}
 SIDES = {"left": "#008c83", "right": "#bb5b92"}
+CONE_CLASSES = {
+    1: ("#eeb9c4", "Inner-side cone → Outer Tube"),
+    2: ("#b1d1ec", "Outer-side cone → Inner Tube"),
+}
 CHANNEL_V2_ADMISSION_SHA256 = "f1b8d865214c67f7f4536806c66f5de47b5a055918a2a5f57fcfb9e251837870"
+ENTRY_HEADER = struct.Struct("<4sIIIIdddii")
+GOAL_HEADER = struct.Struct("<5sII")
 
 
 def configure_style() -> None:
@@ -104,6 +112,60 @@ def read_admitted_tubes(directory: Path) -> tuple[dict[str, np.ndarray], dict]:
         raise ValueError("Channel v2 admission must identify one static map")
     return paths, {
         "static_map_sha256": map_rows[0]["sha256"],
+        "avoid_entries": {row["direction"]: row for row in admission_rows if row["kind"] == "avoid"},
+    }
+
+
+def read_obstacle_luts(directory: Path, entries: dict, shape: tuple[int, int]) -> dict:
+    if set(entries) != {"cw", "ccw"}:
+        raise ValueError("the admitted obstacle lookup needs both directions")
+    tables = {}
+    for direction, entry in entries.items():
+        path = directory / entry["file"]
+        payload = path.read_bytes()
+        if hashlib.sha256(payload).hexdigest() != entry["sha256"]:
+            raise ValueError(f"obstacle LUT SHA-256 mismatch: {entry['file']}")
+        if len(payload) != shape[0] * shape[1]:
+            raise ValueError("obstacle LUT dimensions disagree with the map")
+        codes = np.frombuffer(payload, dtype=np.uint8).reshape(shape)
+        if np.any(codes > 2):
+            raise ValueError("obstacle LUT contains an unknown cone-side code")
+        tables[direction] = codes
+    return tables
+
+
+def read_reverse_entry_lut(entry_path: Path, goal_path: Path) -> dict:
+    entry = entry_path.read_bytes()
+    if len(entry) < ENTRY_HEADER.size:
+        raise ValueError("RGE2 file is shorter than its header")
+    magic, sx, sy, yaw_bins, mask_len, xmin, ymin, res, yaw_min, yaw_step = (
+        ENTRY_HEADER.unpack_from(entry)
+    )
+    states = sx * sy * yaw_bins
+    if magic != b"RGE2" or mask_len != (states + 7) // 8:
+        raise ValueError("invalid RGE2 header")
+    if len(entry) != ENTRY_HEADER.size + mask_len:
+        raise ValueError("RGE2 payload length disagrees with its header")
+    admitted = np.unpackbits(
+        np.frombuffer(entry[ENTRY_HEADER.size:], dtype=np.uint8), bitorder="little",
+    )[:states].astype(bool)
+    goals = goal_path.read_bytes()
+    if len(goals) < GOAL_HEADER.size:
+        raise ValueError("RGEG2 file is shorter than its header")
+    goal_magic, goal_states, goal_count = GOAL_HEADER.unpack_from(goals)
+    offset = GOAL_HEADER.size + goal_count * 24
+    if goal_magic != b"RGEG2" or goal_states != states or len(goals) != offset + states:
+        raise ValueError("RGEG2 file disagrees with the RGE2 state grid")
+    goal_ids = np.frombuffer(goals[offset:], dtype=np.uint8)
+    if not np.all(goal_ids[admitted] < goal_count):
+        raise ValueError("an admitted reverse-entry state lacks a valid goal ID")
+    density = admitted.reshape(yaw_bins, sy, sx).sum(axis=0)
+    return {
+        "density": density, "x": xmin + np.arange(sx) * res,
+        "y": ymin + np.arange(sy) * res, "resolution_m": res,
+        "yaw_min_deg": yaw_min, "yaw_max_deg": yaw_min + (yaw_bins - 1) * yaw_step,
+        "yaw_step_deg": yaw_step, "yaw_bins": yaw_bins,
+        "states": int(admitted.sum()), "positions": int(np.count_nonzero(density)),
     }
 
 
@@ -125,36 +187,78 @@ def draw_paths(axis, paths: dict[str, np.ndarray]) -> None:
                       alpha=0.96, zorder=3)
 
 
-def make_tube_figure(root: Path, output: Path, asset_directory: Path) -> None:
+def make_navigation_figure(root: Path, output: Path, asset_directory: Path) -> None:
     nav = root / "src/hobot_navigation/hobot_nav"
     map_yaml = nav / "maps/rdk_2026_hospital_static_1cm.yaml"
     pixels, extent, metadata, map_image = read_map(map_yaml)
     paths, metrics = read_admitted_tubes(asset_directory)
     if hashlib.sha256(map_image.read_bytes()).hexdigest() != metrics["static_map_sha256"]:
         raise ValueError("the plotted map differs from the Channel v2 admission map")
-    figure = plt.figure(figsize=(8.4, 9.2))
-    figure.text(0.115, 0.95, "CHANNEL V2 TUBE PATHS", fontsize=20, weight="bold")
-    figure.text(0.115, 0.912,
-                 "Inner / Center / Outer  ·  CW and CCW",
+    obstacle_luts = read_obstacle_luts(asset_directory, metrics["avoid_entries"], pixels.shape)
+    reverse = read_reverse_entry_lut(
+        nav / "runtime/reverse_gate_entry_clean.bin",
+        nav / "runtime/reverse_gate_goal_id_clean.bin",
+    )
+    figure = plt.figure(figsize=(14, 8.3))
+    figure.text(0.055, 0.948, "TUBE PATHS AND LUT", fontsize=21, weight="bold")
+    figure.text(0.055, 0.908,
+                 "Channel obstacle lookup  ·  reverse-entry lookup  ·  1 cm static map",
                  fontsize=11, color=MUTED)
-    overview = figure.add_axes([0.14, 0.22, 0.76, 0.65])
+    overview = figure.add_axes([0.065, 0.235, 0.445, 0.605])
+    detail = figure.add_axes([0.615, 0.235, 0.29, 0.605])
     draw_map(overview, pixels, extent)
+    overview.imshow(
+        np.ma.masked_equal(obstacle_luts["cw"], 0), origin="lower", extent=extent,
+        interpolation="nearest", vmin=0, vmax=2, zorder=2,
+        cmap=ListedColormap(["#ffffff", *(color for color, _ in CONE_CLASSES.values())]),
+    )
     draw_paths(overview, paths)
+    overview.set_title("A  Tube paths and obstacle-side LUT (CW)", pad=14)
     overview.set_xlim(extent[:2])
     overview.set_ylim(extent[2:])
+    draw_map(detail, pixels, extent)
+    density = reverse["density"]
+    res = reverse["resolution_m"]
+    color_map = plt.get_cmap("PuRd", reverse["yaw_bins"])
+    mesh = detail.pcolormesh(
+        np.append(reverse["x"] - res/2, reverse["x"][-1] + res/2),
+        np.append(reverse["y"] - res/2, reverse["y"][-1] + res/2),
+        np.ma.masked_equal(density, 0), cmap=color_map,
+        norm=BoundaryNorm(np.arange(0.5, reverse["yaw_bins"] + 1.5), color_map.N),
+        shading="flat", edgecolors="white", linewidth=0.3, zorder=2,
+    )
+    active_y, active_x = np.nonzero(density)
+    x0, x1 = reverse["x"][active_x.min()] - 2*res, reverse["x"][active_x.max()] + 2*res
+    y0, y1 = reverse["y"][active_y.min()] - 2*res, reverse["y"][active_y.max()] + 2*res
+    detail.set_xlim(x0, x1)
+    detail.set_ylim(y0, y1)
+    detail.set_xticks(np.arange(np.ceil(x0*5)/5, x1, 0.2))
+    detail.set_yticks(np.arange(np.ceil(y0*5)/5, y1, 0.2))
+    detail.set_title("B  Reverse-entry LUT", pad=14)
+    color_axis = figure.add_axes([0.925, 0.326, 0.012, 0.37])
+    colorbar = figure.colorbar(mesh, cax=color_axis, ticks=[1, 5, 10, 15, reverse["yaw_bins"]])
+    colorbar.ax.tick_params(labelsize=8, length=0)
+    colorbar.set_label("Admitted yaw bins per x/y cell", fontsize=9, labelpad=9)
     legend = [Line2D([], [], color=color, lw=2.5, label=lane.title())
               for lane, color in LANES.items()]
     legend += [Line2D([], [], color=MUTED, lw=1.7, label="CW"),
                Line2D([], [], color=MUTED, lw=1.7, ls=(0, (3, 3)), label="CCW")]
-    figure.legend(handles=legend, loc="lower left", bbox_to_anchor=(0.10, 0.145),
-                  ncol=5, frameon=False, fontsize=9, columnspacing=1.2, handlelength=2.2)
-    figure.text(0.115, 0.108,
-                 f"Channel v2  |  {metadata['resolution'] * 100:g} cm static map",
+    figure.legend(handles=legend, loc="lower left", bbox_to_anchor=(0.065, 0.137),
+                  ncol=5, frameon=False, fontsize=9, columnspacing=1.1, handlelength=2)
+    cone_legend = [Patch(facecolor=color, edgecolor="none", label=label)
+                   for color, label in CONE_CLASSES.values()]
+    figure.legend(handles=cone_legend, loc="lower left", bbox_to_anchor=(0.065, 0.097),
+                  ncol=2, frameon=False, fontsize=8.5, columnspacing=1.4, handlelength=1.4)
+    figure.text(0.065, 0.075,
+                 f"Obstacle LUT (CW): {np.count_nonzero(obstacle_luts['cw']):,} cone-position cells",
                  fontsize=9.2, color=MUTED)
-    figure.text(0.115, 0.072,
-                 "Source: runtime/channel_v2/runtime_admission.csv and tubes/*.csv",
-                 fontsize=8.1, color=MUTED)
-    save_figure(figure, output, "channel_tubes_v2")
+    figure.text(0.615, 0.156,
+                 f"{reverse['states']:,} states  |  {reverse['positions']} positions",
+                 fontsize=11, weight="bold")
+    figure.text(0.615, 0.126,
+                 f"Position grid {res:g} m; yaw {reverse['yaw_min_deg']}–{reverse['yaw_max_deg']}° "
+                 f"in {reverse['yaw_step_deg']}° steps", fontsize=9, color=MUTED)
+    save_figure(figure, output, "navigation_map_and_lut")
 
 
 def read_servo_segments(source: str, side: str) -> np.ndarray:
@@ -272,9 +376,9 @@ def main() -> int:
     configure_style()
     asset_directory = (args.tube_asset_dir.resolve() if args.tube_asset_dir else
                        root / "src/hobot_navigation/hobot_nav/runtime/channel_v2")
-    make_tube_figure(root, output, asset_directory)
+    make_navigation_figure(root, output, asset_directory)
     make_servo_figure(root, output)
-    for stem in ("channel_tubes_v2", "servo_pchip_calibration"):
+    for stem in ("navigation_map_and_lut", "servo_pchip_calibration"):
         for extension in ("png", "svg"):
             print(output / f"{stem}.{extension}")
     return 0
