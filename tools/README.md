@@ -26,9 +26,7 @@ measured vehicle response
         -> low-speed real-vehicle verification
 ```
 
-Commands that consume rosbag data take the bag path explicitly. Bags, logs,
-private hostnames and generated result directories are not part of this
-repository.
+Commands that consume rosbag data take the bag path explicitly.
 
 ```bash
 python3 tools/vehicle_model/test_ackermann_vehicle_simulator.py

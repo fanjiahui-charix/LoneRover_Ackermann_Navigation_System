@@ -1,6 +1,6 @@
 # Tube and RPP tuning tools
 
-本目录保留不依赖任务层、视觉和设备驱动的几何与离线调参工具。
+本目录包含 Tube 几何生成、检查和 RPP 离线调参工具。
 
 - `generate_tube_paths.py`：生成中心、内侧、外侧 Tube 候选；
 - `evaluate_channel_tubes.py`：检查路径顺序、闭合、footprint 和曲率；
@@ -13,4 +13,4 @@
 - `freeze_channel_runtime_tuning.py`：从筛选结果生成运行参数；
 - `visualize_channel_assets.py`：绘制路径、曲率和 footprint 检查图。
 
-这些工具的输出目录应放在仓库外。几何通过只代表离线约束通过，实际车辆仍需做低速验证。
+几何通过只代表离线约束通过，实际车辆仍需做低速验证。

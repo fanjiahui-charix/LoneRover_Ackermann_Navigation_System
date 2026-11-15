@@ -315,7 +315,7 @@ def write_summary_md(rows, path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", default="/root/ekf_bags_car")
+    parser.add_argument("--root", required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument("--summary-md", required=True)
     args = parser.parse_args()

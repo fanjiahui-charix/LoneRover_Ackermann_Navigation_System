@@ -20,4 +20,4 @@ python3 tools/reverse_entry/validate_reverse_entry_paths.py --help
 python3 tools/reverse_entry/build_clean_reverse_entry_lut.py --help
 ```
 
-Write generated results outside the repository. A change to vehicle dimensions, minimum turning radius, map, or steering calibration invalidates the old LUT.
+A change to vehicle dimensions, minimum turning radius, map, or steering calibration invalidates the old LUT.

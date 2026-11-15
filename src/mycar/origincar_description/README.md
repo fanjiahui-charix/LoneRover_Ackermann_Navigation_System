@@ -15,4 +15,4 @@ ros2 launch origincar_description display.launch.py
 - `tools/vehicle_model/nav2_virtual_vehicle_replay.py`：让真实 Nav2 节点接收虚拟底盘反馈，命令全部走 virtual topic；
 - `tools/vehicle_model/offline_vehicle_response_sim.py`：使用 rosbag 做不启动 ROS 节点的离线回放和参数对比。
 
-模型尺寸来自比赛车辆标定参数。网格文件仅用于可视化，运行导航和离线回放不依赖它们。
+当前 URDF/Xacro 使用长方体和圆柱体表示车身、传感器和车轮，供 RViz 可视化使用。

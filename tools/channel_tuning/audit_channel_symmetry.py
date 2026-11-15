@@ -103,7 +103,7 @@ def main() -> int:
             "wheelbase_m": WHEELBASE_M,
             "track_width_m": TRACK_WIDTH_M,
             "center_curvature_gain_is_not_calibrated_servo_data": True,
-            "source": "/root/RDKX5_OrigincarPro小车STM32源码下位机/BALANCE/servo_fit.c and HARDWARE/usartx.c",
+            "source": "tools/calibration/servo_fit.c and tools/vehicle_model/ackermann_vehicle_model.py",
         },
         "shadow_gain_microtest": {
             "identified_common_gain": 0.96061,
